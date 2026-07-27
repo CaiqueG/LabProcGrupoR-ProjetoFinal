@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Ambiente virtual
+venv/
+.venv/
+env/
+
+# Flask
+instance/
+.webassets-cache
+
+# Dados gerados em tempo de execução
+src/data/presencas.csv
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Documentos temporários
+*.docx
+*.tmp
