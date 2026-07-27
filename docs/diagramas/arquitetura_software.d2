@@ -1,0 +1,57 @@
+# Arquitetura de Software — Sistema de Presença por Código Morse
+# Visualizar em: https://play.d2lang.com
+
+direction: down
+
+# Camadas
+web: Interface Web {
+  shape: rectangle
+  style.fill: "#dbeafe"
+  browser: Navegador\n(polling AJAX 1s)
+  flask: app.py\n(Flask :5000)
+  browser -> flask: GET /status
+}
+
+core: Núcleo do Sistema {
+  shape: rectangle
+  style.fill: "#fef9c3"
+  fsm: fsm.py\n(FSM + threading.Lock)
+  decoder: morse_decoder.py\n(lógica pura)
+  fsm -> decoder: registrar_toque()\nfechar_digito()
+}
+
+hardware_layer: Abstração de Hardware {
+  shape: rectangle
+  style.fill: "#dcfce7"
+  hw: hardware.py\n(gpiozero callbacks)
+  lcd: lcd_driver.py\n(I2C / fallback console)
+  hw -> fsm: when_pressed / when_released
+  lcd -> fsm: atualizar_lcd()
+}
+
+persistence: Persistência {
+  shape: rectangle
+  style.fill: "#fce7f3"
+  db: database.py\n(JSON + CSV)
+}
+
+# Conexões entre camadas
+web.flask -> core.fsm: obter_status()
+core.fsm -> persistence.db: validar_senha()\nregistrar_presenca()
+core.fsm -> hardware_layer.lcd: mostrar()
+core.fsm -> hardware_layer.hw: acender_verde/vermelho()\nbip_sucesso/erro()
+
+# Hardware físico
+gpio: GPIO — Raspberry Pi 3 {
+  shape: rectangle
+  style.fill: "#f3f4f6"
+  botoes: Botões\n(GPIO 17, 27, 22)
+  leds: LEDs\n(GPIO 23, 24)
+  buzzer: Buzzer\n(GPIO 12)
+  lcd_hw: LCD 1602\n(I2C SDA/SCL)
+}
+
+hardware_layer.hw -> gpio.botoes: leitura
+hardware_layer.hw -> gpio.leds: escrita
+hardware_layer.hw -> gpio.buzzer: PWM
+hardware_layer.lcd -> gpio.lcd_hw: I2C

@@ -1,0 +1,30 @@
+# FSM — Sistema de Presença por Código Morse
+# Visualizar em: https://play.d2lang.com
+
+direction: right
+
+IDLE -> DIGITANDO_SIMBOLO: toque Morse\n(pressionar)
+DIGITANDO_SIMBOLO -> AGUARDANDO_SIMBOLO: soltar botão
+
+AGUARDANDO_SIMBOLO -> DIGITANDO_SIMBOLO: novo toque\n(próximo símbolo)
+AGUARDANDO_SIMBOLO -> AGUARDANDO_SIMBOLO: pausa ≥ 1s\n(dígito fechado,\nainda < 4 dígitos)
+AGUARDANDO_SIMBOLO -> VALIDANDO: pausa ≥ 1s ou Confirmar\n(4 dígitos completos)
+
+VALIDANDO -> ACESSO_OK: senha válida
+VALIDANDO -> ACESSO_NEGADO: senha inválida
+
+ACESSO_OK -> IDLE: após 2s
+ACESSO_NEGADO -> IDLE: após 2s
+
+# Cancelar retorna a IDLE de qualquer estado
+DIGITANDO_SIMBOLO -> IDLE: Cancelar {style.stroke-dash: 3}
+AGUARDANDO_SIMBOLO -> IDLE: Cancelar {style.stroke-dash: 3}
+VALIDANDO -> IDLE: Cancelar {style.stroke-dash: 3}
+
+# Estilos
+IDLE.style.fill: "#e8f4f8"
+ACESSO_OK.style.fill: "#d4edda"
+ACESSO_OK.style.stroke: "#28a745"
+ACESSO_NEGADO.style.fill: "#f8d7da"
+ACESSO_NEGADO.style.stroke: "#dc3545"
+VALIDANDO.style.fill: "#fff3cd"
