@@ -90,7 +90,7 @@ def main():
 
     print("=" * 50)
     print("  Demo Morse — Semana 1")
-    print("  Botão GPIO 17 | LED verde GPIO 23 | LED verm GPIO 24")
+    print("  Botão S4 GPIO 26 | RGB: verde=GPIO6  vermelho=GPIO5  azul=GPIO13")
     print("  Toque curto = .  |  Toque longo = -")
     print("  Ctrl+C para encerrar")
     print("=" * 50 + "\n")
