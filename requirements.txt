@@ -1,0 +1,4 @@
+flask
+gpiozero
+lgpio
+smbus2
