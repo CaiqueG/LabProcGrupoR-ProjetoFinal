@@ -16,13 +16,13 @@ Sistema embarcado para controle de presença em sala de aula: cada aluno digita 
 
 | Componente | Pino BCM | Observação |
 |---|---|---|
-| Botão Morse (entrada principal) | GPIO 17 | Toque curto < 0,3s = ponto; longo ≥ 0,3s = traço |
-| Botão Confirmar | GPIO 27 | Fecha o dígito atual imediatamente |
-| Botão Cancelar | GPIO 22 | Limpa toda a entrada |
-| LED Verde | GPIO 23 | Acende em caso de acesso liberado |
-| LED Vermelho | GPIO 24 | Acende em caso de senha inválida |
-| Buzzer passivo | GPIO 12 | Bipe de sucesso ou erro |
-| Display LCD 1602 (I2C) | SDA=GPIO 2, SCL=GPIO 3 | Endereço 0x27 ou 0x3F |
+| Botão Morse (entrada principal) | GPIO 26 | Botão S4 da placa Freenove |
+| Botão Confirmar | GPIO 18 | Botão externo na protoboard |
+| Botão Cancelar | GPIO 23 | Botão externo na protoboard |
+| LED Verde | GPIO 17 | LED da placa Freenove |
+| LED Vermelho | GPIO 27 | LED externo na protoboard |
+| Buzzer passivo | GPIO 12 | Conector Buzzer da placa Freenove |
+| Display LCD 1602 (I2C) | SDA=GPIO 2, SCL=GPIO 3 | Conector I2C da placa Freenove |
 
 > LCD e buzzer são opcionais: se não estiverem conectados, o sistema continua funcionando. O LCD cai em modo console e o buzzer é ignorado com aviso no log.
 

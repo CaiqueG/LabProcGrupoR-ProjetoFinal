@@ -100,13 +100,13 @@ O sistema é executado inteiramente no **Raspberry Pi 3 Model B** (SoC Broadcom 
 
 | Componente       | Interface     | Pino BCM        | Função                             |
 | ---------------- | ------------- | --------------- | ---------------------------------- |
-| Botão Morse      | GPIO digital  | 17              | Entrada principal do usuário       |
-| Botão Confirmar  | GPIO digital  | 27              | Fecha o dígito atual imediatamente |
-| Botão Cancelar   | GPIO digital  | 22              | Limpa o buffer de entrada          |
-| LED Verde        | GPIO digital  | 23              | Feedback de acesso liberado        |
-| LED Vermelho     | GPIO digital  | 24              | Feedback de senha inválida         |
-| Buzzer passivo   | GPIO digital  | 12              | Feedback sonoro                    |
-| Display LCD 1602 | I2C (SDA/SCL) | GPIO 2 / GPIO 3 | Exibição de mensagens              |
+| Botão Morse      | GPIO digital  | 26              | Botão S4 da placa Freenove         |
+| Botão Confirmar  | GPIO digital  | 18              | Botão externo na protoboard        |
+| Botão Cancelar   | GPIO digital  | 23              | Botão externo na protoboard        |
+| LED Verde        | GPIO digital  | 17              | LED da placa Freenove              |
+| LED Vermelho     | GPIO digital  | 27              | LED externo na protoboard          |
+| Buzzer passivo   | GPIO digital  | 12              | Conector Buzzer da placa Freenove  |
+| Display LCD 1602 | I2C (SDA/SCL) | GPIO 2 / GPIO 3 | Conector I2C da placa Freenove     |
 
 
 > **Nota sobre GPIO:** a decisão de usar `gpiozero` como biblioteca padrão em todos os módulos foi tomada a partir do conflito de drivers relatado na Aula 10, onde o uso simultâneo de `RPi.GPIO` e outra biblioteca causava falha na inicialização dos pinos.

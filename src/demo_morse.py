@@ -5,10 +5,11 @@ demo_morse.py — Demonstração interativa do decodificador Morse (Semana 1).
 Executa no Raspberry Pi com botão e LEDs conectados.
 Não depende de LCD, buzzer, banco de dados nem Flask.
 
-Hardware necessário:
-    Botão Morse  -> GPIO 17 (+ GND)
-    LED Verde    -> GPIO 23 (+ resistor ~330Ω + GND)
-    LED Vermelho -> GPIO 24 (+ resistor ~330Ω + GND)
+Hardware necessário (todos já na placa Freenove — nenhum fio extra):
+    Botão Morse  -> GPIO 26  (botão S4)
+    RGB LED Red  -> GPIO 5   (traço = vermelho)
+    RGB LED Green-> GPIO 6   (ponto  = verde)
+    RGB LED Blue -> GPIO 13  (erro   = azul)
 
 Como usar:
     python3 src/demo_morse.py
@@ -61,6 +62,7 @@ def main():
         resultado = decoder.fechar_digito_se_completo()
         if resultado == ERRO:
             print("  ✗ Sequência inválida — buffer limpo.\n", flush=True)
+            hw.piscar_erro()
         else:
             senha_parcial.append(resultado)
             print(f"  ✓ Dígito: {resultado}  |  Senha até agora: "
@@ -74,6 +76,7 @@ def main():
             if resultado == ERRO:
                 print("  ✗ Sequência inválida (timeout) — buffer limpo.\n",
                       flush=True)
+                hw.piscar_erro()
             elif resultado is not None:
                 senha_parcial.append(resultado)
                 print(f"  ✓ Dígito (timeout): {resultado}  |  Senha: "
