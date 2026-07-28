@@ -310,6 +310,56 @@ python3 -m unittest tests/test_morse_decoder.py -v
 | RNF2 — Sequências inválidas descartadas | ✅ Total (TU-03, TU-04)                       |
 | RF2, RF3, RF4, RF5                      | 🔲 Planejados, implementados nas semanas 2–4 |
 
+### 8.2 Resultados Obtidos — Semana 1
+
+Os testes unitários foram executados na máquina de desenvolvimento antes da sessão de laboratório, com todos os 7 casos passando:
+
+```
+test_cancelar_limpa_buffer_e_senha ... ok
+test_senha_completa_com_4_digitos ... ok
+test_sequencia_de_5_simbolos_sem_mapeamento_retorna_erro ... ok
+test_sequencia_incompleta_retorna_erro_e_nao_trava ... ok
+test_todos_os_digitos_0_a_9 ... ok
+test_toques_extras_apos_senha_completa_sao_ignorados ... ok
+test_verificar_timeout_nao_fecha_antes_do_prazo ... ok
+
+Ran 7 tests in 0.001s — OK
+```
+
+O demo `src/demo_morse.py` foi executado no Raspberry Pi com a placa Freenove. O botão S4 (GPIO 26) e o LED RGB (GPIO 5/6/13) responderam corretamente: toque curto acendeu o LED verde, toque longo acendeu o LED vermelho, e sequências inválidas acenderam o LED azul.
+
+### 8.3 Lições Aprendidas — Semana 1
+
+Dois problemas de usabilidade foram identificados durante o teste prático na placa:
+
+**1. Ausência de botão para limpar o buffer**
+
+Não há como o usuário desfazer uma digitação incorreta sem reiniciar o programa. Qualquer erro de toque obriga o usuário a aguardar 5 símbolos e depois tratar o erro. A adição de um **botão físico dedicado a cancelar/limpar** é essencial para a usabilidade do sistema e será implementada na Semana 2.
+
+**2. Comportamento indesejado do timeout intra-dígito**
+
+O comportamento atual do `morse_decoder.py` fecha o dígito (e o descarta como inválido) sempre que a pausa entre toques atinge 1 segundo, independentemente de quantos símbolos já foram registrados. Na prática, isso penaliza o usuário por demorar entre dois toques dentro do mesmo dígito — algo natural para iniciantes em Morse.
+
+O comportamento desejado é:
+- A pausa entre toques **não** deve fechar o dígito se ele ainda estiver incompleto (< 5 símbolos).
+- O sistema deve continuar aguardando o próximo toque indefinidamente, preservando os símbolos já digitados.
+- O dígito só deve ser validado após exatamente **5 símbolos** serem inseridos.
+- O timeout de 1 segundo deve ser aplicado apenas ao **intervalo entre dígitos** (após o 5º símbolo), não dentro de um dígito.
+
+Essa mudança requer revisão da lógica de `verificar_timeout()` em `morse_decoder.py` e será implementada na Semana 2.
+
+### 8.4 Planejamento da Semana 2
+
+Com base nas lições aprendidas da Semana 1, a Semana 2 incluirá:
+
+| Item | Descrição |
+|---|---|
+| Botão Cancelar | Adicionar botão físico (GPIO a definir) que limpa o buffer a qualquer momento |
+| Revisão do timeout | `verificar_timeout()` só fecha o dígito após 5 símbolos; pausa intra-dígito é ignorada |
+| LCD 1602 | Exibir buffer atual e dígitos confirmados em tempo real no display |
+| Buzzer | Feedback sonoro: bipe curto por símbolo, bipe longo por dígito válido, bipe de erro |
+| `database.py` | Validação da senha contra `data/alunos.json` |
+| `demo_validacao.py` | Script integrado: Morse → LCD → LED → buzzer → validação de senha |
 
 ---
 
