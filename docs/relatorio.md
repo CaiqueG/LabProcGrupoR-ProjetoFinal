@@ -176,13 +176,7 @@ stateDiagram-v2
 
 ### 5.3 Interface Web
 
-A interface web é servida pelo Flask na porta 5000. A página HTML realiza polling via `fetch()` a cada 1 segundo no endpoint `/status`, que retorna um JSON com:
-
-- `mensagem`: texto atual exibido no LCD
-- `senha_parcial`: dígitos já fechados
-- `buffer_simbolos`: símbolos do dígito em andamento (`.` e `-`)
-- `ultimo_resultado`: `"sucesso"`, `"erro"` ou `null`
-- `historico`: últimas 10 presenças registradas
+A interface web (Semana 4) será servida pelo Flask na porta 5000 com polling a cada 1 segundo no endpoint `/status`, retornando estado do sistema e histórico de presenças em JSON.
 
 ---
 
@@ -190,46 +184,16 @@ A interface web é servida pelo Flask na porta 5000. A página HTML realiza poll
 
 ## 6. Ferramentas Utilizadas
 
-
-
-### 6.1 Hardware
-
-
-| Componente          | Especificação                                               |
-| ------------------- | ----------------------------------------------------------- |
-| Processador         | Raspberry Pi 3 Model B — ARM Cortex-A53, 1,2 GHz, 4 núcleos |
-| Sistema Operacional | Raspberry Pi OS (Debian Bookworm)                           |
-| Display             | LCD 1602 com módulo I2C PCF8574 (endereço 0x27 ou 0x3F)     |
-| Botões              | Push-button com debounce por software (50ms)                |
-| LEDs                | LEDs difusos 5mm com resistor limitador ~330Ω               |
-| Buzzer              | Buzzer passivo (geração de tom por PWM de software)         |
-
-
-
-
-### 6.2 Linguagens e Bibliotecas
-
-
-| Ferramenta | Versão | Uso                                                     |
-| ---------- | ------ | ------------------------------------------------------- |
-| Python     | 3.11+  | Linguagem principal                                     |
-| Flask      | 3.x    | Servidor web e API REST                                 |
-| gpiozero   | 2.x    | Abstração de GPIO (botões, LEDs, buzzer)                |
-| lgpio      | —      | Backend de GPIO exigido pelo gpiozero no RPi OS recente |
-| smbus2     | —      | Comunicação I2C com o LCD                               |
-
-
-
-
-### 6.3 Ferramentas de Desenvolvimento
-
-
-| Ferramenta        | Uso                                                     |
-| ----------------- | ------------------------------------------------------- |
-| Git / GitHub      | Controle de versão e hospedagem do repositório          |
-| unittest (stdlib) | Testes unitários do decodificador Morse                 |
-| VS Code / Cursor  | Edição do código na máquina de desenvolvimento          |
-| SSH               | Acesso remoto ao Raspberry Pi durante o desenvolvimento |
+| Categoria | Ferramenta / Componente | Uso |
+| --------- | ----------------------- | --- |
+| Hardware  | Raspberry Pi 3 Model B (ARM Cortex-A53, 1,2 GHz) | Plataforma de execução |
+| Hardware  | LCD 1602 + módulo I2C PCF8574 | Display de feedback |
+| Hardware  | Botões push-button, LEDs, buzzer passivo | Entrada e feedback físico |
+| Software  | Python 3.11+ | Linguagem principal |
+| Software  | Flask 3.x | Servidor web e API REST |
+| Software  | gpiozero 2.x + lgpio | Abstração GPIO |
+| Software  | smbus2 | Comunicação I2C com LCD |
+| Dev       | Git / GitHub + unittest | Versionamento e testes unitários |
 
 
 ---
@@ -267,48 +231,20 @@ O projeto é desenvolvido de forma incremental ao longo de quatro semanas. A cad
 
 ### 8.1 Entrega da Semana 1 — Base e Decodificação Morse
 
-**Objetivo:** validar a lógica central do sistema (decodificação Morse) de forma isolada — primeiro sem hardware (testes unitários), depois na placa com botão e LEDs.
+**Objetivo:** validar a lógica central do sistema (decodificação Morse) de forma isolada — primeiro sem hardware (testes unitários), depois na placa com botão e LED RGB.
 
-**O que é entregue:**
+**Artefatos entregues:** `src/morse_decoder.py`, `src/hardware.py`, `src/demo_morse.py`, `tests/test_morse_decoder.py`, `docs/relatorio.md`, `docs/diagramas/`.
 
+**Demo no Raspberry Pi** (`python3 src/demo_morse.py`): toque curto → `.` + LED verde; toque longo → `-` + LED vermelho; 5 símbolos completos → dígito decodificado no terminal; sequência inválida → LED azul + buffer limpo.
 
-| Artefato                      | Tipo         | Descrição                                                                   |
-| ----------------------------- | ------------ | --------------------------------------------------------------------------- |
-| `src/morse_decoder.py`        | Código       | Decodificador de dígitos Morse 0–9 (padrão ITU-R M.1677, 5 símbolos/dígito) |
-| `src/hardware.py`             | Código       | Abstração do botão Morse e LEDs verde/vermelho via gpiozero                 |
-| `src/demo_morse.py`           | Código       | Script de demonstração executável no Raspberry Pi                           |
-| `tests/test_morse_decoder.py` | Testes       | 7 testes unitários do decodificador, executáveis sem hardware               |
-| `docs/relatorio.md`           | Documentação | Motivação, objetivos, requisitos, arquitetura e testes planejados           |
-| `docs/diagramas/`             | Documentação | Diagramas D2 da FSM e arquitetura de software                               |
+**Requisitos cobertos:**
 
-
-**Funcionalidade demonstrável no Raspberry Pi:**
-
-```
-python3 src/demo_morse.py
-```
-
-1. Pressionar o botão Morse (GPIO 17):
-  - Toque **curto** (< 0,3s) → exibe `.` no terminal + LED verde pisca brevemente
-  - Toque **longo** (≥ 0,3s) → exibe `-` no terminal + LED vermelho pisca brevemente
-2. Ao completar **5 símbolos**, o dígito decodificado é exibido: ex. `.---- → dígito 1`
-3. Sequência inválida → mensagem de erro, buffer limpo, sistema não trava
-
-**Testes unitários — executar sem hardware:**
-
-```bash
-python3 -m unittest tests/test_morse_decoder.py -v
-```
-
-**Requisitos cobertos nesta entrega:**
-
-
-| Requisito                               | Cobertura                                    |
-| --------------------------------------- | -------------------------------------------- |
-| RF1 — Decodificação Morse               | ✅ Total (lógica + demonstração física)       |
-| RF1b — Fechamento por pausa             | ✅ Total (testado unitariamente e no demo)    |
-| RNF2 — Sequências inválidas descartadas | ✅ Total (TU-03, TU-04)                       |
-| RF2, RF3, RF4, RF5                      | 🔲 Planejados, implementados nas semanas 2–4 |
+| Requisito | Cobertura |
+| --------- | --------- |
+| RF1 — Decodificação Morse | Completo (lógica + demo física) |
+| RF1b — Fechamento por pausa | Completo (testado em TU-07 e no demo) |
+| RNF2 — Sequências inválidas descartadas | Completo (TU-03, TU-04) |
+| RF2, RF3, RF4, RF5 | Planejados — implementados nas Semanas 2–4 |
 
 ### 8.2 Resultados Obtidos — Semana 1
 
@@ -350,16 +286,7 @@ Essa mudança requer revisão da lógica de `verificar_timeout()` em `morse_deco
 
 ### 8.4 Planejamento da Semana 2
 
-Com base nas lições aprendidas da Semana 1, a Semana 2 incluirá:
-
-| Item | Descrição |
-|---|---|
-| Botão Cancelar | Adicionar botão físico (GPIO a definir) que limpa o buffer a qualquer momento |
-| Revisão do timeout | `verificar_timeout()` só fecha o dígito após 5 símbolos; pausa intra-dígito é ignorada |
-| LCD 1602 | Exibir buffer atual e dígitos confirmados em tempo real no display |
-| Buzzer | Feedback sonoro: bipe curto por símbolo, bipe longo por dígito válido, bipe de erro |
-| `database.py` | Validação da senha contra `data/alunos.json` |
-| `demo_validacao.py` | Script integrado: Morse → LCD → LED → buzzer → validação de senha |
+Com base nas lições aprendidas, a Semana 2 incluirá: botão físico de cancelamento; revisão do timeout (pausa intra-dígito não descarta símbolos, apenas o intervalo entre dígitos completos dispara o fechamento); integração do LCD 1602 e buzzer; módulo `database.py` para validação de senha; e script `demo_validacao.py` unificando todos os componentes.
 
 ---
 
@@ -371,45 +298,28 @@ A estratégia de validação é dividida em dois tipos: testes **unitários** (e
 
 ### 9.1 Testes Unitários — `tests/test_morse_decoder.py`
 
-Testam exclusivamente o módulo `morse_decoder.py`, sem dependência de GPIO, LCD ou Flask.
+Testam exclusivamente `morse_decoder.py`, sem dependência de GPIO. Executar com: `python3 -m unittest tests/test_morse_decoder.py -v`
 
-
-| ID    | Descrição                                                   | Método                                                     | Resultado Esperado                                       |
-| ----- | ----------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
-| TU-01 | Todos os 10 dígitos (0–9) decodificados corretamente        | `test_todos_os_digitos_0_a_9`                              | Cada sequência de 5 símbolos retorna o dígito correto    |
-| TU-02 | Senha de 4 dígitos montada corretamente                     | `test_senha_completa_com_4_digitos`                        | `decoder.senha == "0123"` após fechar 4 dígitos          |
-| TU-03 | Sequência incompleta (< 5 símbolos) retorna ERRO sem travar | `test_sequencia_incompleta_retorna_erro_e_nao_trava`       | `resultado == ERRO`, `decoder.senha == ""`, buffer limpo |
-| TU-04 | Sequência de 5 símbolos sem mapeamento retorna ERRO         | `test_sequencia_de_5_simbolos_sem_mapeamento_retorna_erro` | `resultado == ERRO`                                      |
-| TU-05 | Cancelar limpa buffer e senha                               | `test_cancelar_limpa_buffer_e_senha`                       | `decoder.senha == ""` e `decoder.buffer_simbolos == ""`  |
-| TU-06 | Toques extras após senha completa são ignorados             | `test_toques_extras_apos_senha_completa_sao_ignorados`     | `decoder.senha == "0000"` sem alteração                  |
-| TU-07 | `verificar_timeout` não fecha dígito antes do prazo         | `test_verificar_timeout_nao_fecha_antes_do_prazo`          | Retorna `None` imediatamente após o toque                |
-
-
-**Como executar:**
-
-```bash
-python3 -m unittest tests/test_morse_decoder.py -v
-```
-
-
+| ID    | Descrição                                              | Resultado Esperado                              | Status (S1) |
+| ----- | ------------------------------------------------------ | ----------------------------------------------- | ----------- |
+| TU-01 | Todos os 10 dígitos (0–9) decodificados corretamente   | Cada sequência de 5 símbolos retorna o dígito   | Passou      |
+| TU-02 | Senha de 4 dígitos montada corretamente                | `decoder.senha == "0123"` após 4 dígitos        | Passou      |
+| TU-03 | Sequência incompleta (< 5 símbolos) retorna ERRO       | `resultado == ERRO`, buffer limpo               | Passou      |
+| TU-04 | Sequência de 5 símbolos sem mapeamento retorna ERRO    | `resultado == ERRO`                             | Passou      |
+| TU-05 | Cancelar limpa buffer e senha                          | `decoder.senha == ""`, `buffer_simbolos == ""`  | Passou      |
+| TU-06 | Toques extras após senha completa são ignorados        | `decoder.senha == "0000"` sem alteração         | Passou      |
+| TU-07 | `verificar_timeout` não fecha dígito antes do prazo   | Retorna `None` imediatamente após o toque       | Passou      |
 
 ### 9.2 Testes de Hardware — Executados no Raspberry Pi
 
-
-| ID    | Requisito | Procedimento                                                                   | Resultado Esperado                                                |
-| ----- | --------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| TH-01 | RF1       | Pressionar 1 toque curto + 4 toques longos (`.----` = dígito "1"), aguardar 1s | LCD exibe "Senha: 1___"; interface web atualiza                   |
-| TH-02 | RF1       | Pressionar sequência inválida de 5 símbolos (`.-.-.` ) e aguardar 1s           | LCD exibe "Sequência inválida"; buffer limpo                      |
-| TH-03 | RF2       | Digitar senha cadastrada (ex.: `1234`) e pressionar Confirmar                  | LED verde acende, buzzer bipa sucesso, presença registrada no CSV |
-| TH-04 | RF2b      | Digitar senha não cadastrada e pressionar Confirmar                            | LED vermelho acende, buzzer bipa erro, nenhum registro no CSV     |
-| TH-05 | RF3       | Digitar 2 dígitos e pressionar Cancelar                                        | LCD volta a "Digite a senha em Morse", buffer zerado              |
-| TH-06 | RNF1      | Medir latência do endpoint `/status` com DevTools                              | Latência < 1s em condições normais de rede local                  |
-| TH-07 | RNF2      | Pressionar o botão Morse rapidamente várias vezes                              | Apenas os eventos com intervalo > 50ms são registrados            |
-| TH-08 | RNF3      | Acessar `/status` no navegador enquanto digita simultaneamente                 | Nenhum travamento; ambas as operações concluem normalmente        |
-| TH-09 | RNF4      | Iniciar o sistema sem LCD conectado                                            | Sistema inicia, mensagens aparecem no console, sem erro fatal     |
-
-
-> **Nota:** os resultados dos testes de hardware serão registrados nas entregas das Semanas 2 e 3, conforme os testes forem executados no laboratório.
+| ID    | Requisito | Procedimento                                                         | Resultado Esperado                                       | Status   |
+| ----- | --------- | -------------------------------------------------------------------- | -------------------------------------------------------- | -------- |
+| TH-01 | RF1       | `.----` (dígito 1): 1 toque curto + 4 toques longos                 | Dígito "1" exibido no terminal; LED verde/vermelho pisca | S1: OK   |
+| TH-02 | RF1       | Sequência inválida `.-.-.` de 5 símbolos                            | Mensagem de erro; LED azul; buffer limpo                 | S1: OK   |
+| TH-03 | RF2       | Digitar senha cadastrada e confirmar                                 | LED verde, buzzer sucesso, presença registrada no CSV    | Semana 2 |
+| TH-04 | RF3       | Digitar 2 dígitos e pressionar Cancelar                             | Buffer zerado, sistema volta ao estado inicial           | Semana 2 |
+| TH-05 | RNF2      | Pressionar botão rapidamente várias vezes (debounce)                | Apenas eventos com intervalo > 50ms são registrados      | Semana 2 |
+| TH-06 | RNF4      | Iniciar o sistema sem LCD conectado                                 | Sistema inicia; mensagens no console; sem erro fatal     | Semana 3 |
 
 ---
 
