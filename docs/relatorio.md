@@ -417,7 +417,25 @@ python3 -m unittest tests/test_morse_decoder.py -v
 
 ## 10. Conclusões
 
-*(Esta seção será completada na Semana 4, após a execução completa dos testes e a apresentação final.)*
+### 10.1 Conclusão da Semana 1
+
+A primeira semana de desenvolvimento estabeleceu com sucesso a base do sistema de controle de acesso por código Morse. Os objetivos propostos foram cumpridos: a lógica de decodificação Morse foi implementada, validada por 7 testes unitários e demonstrada em funcionamento no Raspberry Pi com a placa Freenove, utilizando o botão S4 (GPIO 26) e o LED RGB integrado (GPIO 5/6/13).
+
+A abordagem de validar a lógica isoladamente — antes de qualquer integração com hardware — mostrou-se eficiente: todos os testes unitários passaram sem necessidade de ajustes, e os problemas identificados no teste físico foram de usabilidade, não de lógica.
+
+**Pontos positivos:**
+- A separação entre lógica (`morse_decoder.py`) e hardware (`hardware.py`) facilitou o teste isolado e a depuração.
+- O uso de componentes integrados da placa Freenove eliminou a necessidade de fiação externa na Semana 1, acelerando o setup.
+- A metodologia TDD — escrever testes antes de integrar ao hardware — provou seu valor ao garantir confiança no módulo central antes da sessão prática.
+
+**Limitações identificadas:**
+- A ausência de um botão físico para cancelar/limpar o buffer torna o sistema difícil de usar quando o usuário comete um erro de digitação, pois não há forma de desfazer um toque incorreto sem aguardar o fim do processo.
+- O mecanismo de timeout intra-dígito penaliza usuários iniciantes em Morse: uma pausa natural entre dois toques do mesmo dígito invalida toda a sequência acumulada até aquele momento, causando frustração e perda de dados já inseridos.
+
+**Encaminhamentos para a Semana 2:**
+Ambas as limitações identificadas serão corrigidas na próxima entrega. Será adicionado um botão físico de cancelamento e a lógica de timeout será revisada para aguardar indefinidamente até a inserção do 5º símbolo, aplicando o timeout de intervalo apenas entre dígitos completos. Essas mudanças tornarão o sistema mais robusto e adequado ao uso prático na placa.
+
+*(A conclusão final do projeto será elaborada na Semana 4, após a execução completa de todos os requisitos e testes de integração.)*
 
 ---
 
