@@ -338,7 +338,7 @@ Não há como o usuário desfazer uma digitação incorreta sem reiniciar o prog
 
 **2. Comportamento indesejado do timeout intra-dígito**
 
-O comportamento atual do `morse_decoder.py` fecha o dígito (e o descarta como inválido) sempre que a pausa entre toques atinge 1 segundo, independentemente de quantos símbolos já foram registrados. Na prática, isso penaliza o usuário por demorar entre dois toques dentro do mesmo dígito — algo natural para iniciantes em Morse.
+O comportamento atual do `morse_decoder.py` fecha o dígito (e o descarta como inválido) sempre que a pausa entre toques atinge 1 segundo, independentemente de quantos símbolos já foram registrados. Na prática, isso penaliza o usuário por demorar entre dois toques dentro do mesmo dígito, algo natural para iniciantes em Morse.
 
 O comportamento desejado é:
 - A pausa entre toques **não** deve fechar o dígito se ele ainda estiver incompleto (< 5 símbolos).
@@ -421,12 +421,12 @@ python3 -m unittest tests/test_morse_decoder.py -v
 
 A primeira semana de desenvolvimento estabeleceu com sucesso a base do sistema de controle de acesso por código Morse. Os objetivos propostos foram cumpridos: a lógica de decodificação Morse foi implementada, validada por 7 testes unitários e demonstrada em funcionamento no Raspberry Pi com a placa Freenove, utilizando o botão S4 (GPIO 26) e o LED RGB integrado (GPIO 5/6/13).
 
-A abordagem de validar a lógica isoladamente — antes de qualquer integração com hardware — mostrou-se eficiente: todos os testes unitários passaram sem necessidade de ajustes, e os problemas identificados no teste físico foram de usabilidade, não de lógica.
+A abordagem de validar a lógica isoladamente, antes de qualquer integração com hardware, mostrou-se eficiente: todos os testes unitários passaram sem necessidade de ajustes, e os problemas identificados no teste físico foram de usabilidade, não de lógica.
 
 **Pontos positivos:**
 - A separação entre lógica (`morse_decoder.py`) e hardware (`hardware.py`) facilitou o teste isolado e a depuração.
 - O uso de componentes integrados da placa Freenove eliminou a necessidade de fiação externa na Semana 1, acelerando o setup.
-- A metodologia TDD — escrever testes antes de integrar ao hardware — provou seu valor ao garantir confiança no módulo central antes da sessão prática.
+- A metodologia TDD, escrever testes antes de integrar ao hardware, provou seu valor ao garantir confiança no módulo central antes da sessão prática.
 
 **Limitações identificadas:**
 - A ausência de um botão físico para cancelar/limpar o buffer torna o sistema difícil de usar quando o usuário comete um erro de digitação, pois não há forma de desfazer um toque incorreto sem aguardar o fim do processo.
