@@ -1,0 +1,17 @@
+stateDiagram-v2
+    direction LR
+
+    [*] --> IDLE
+
+    IDLE --> DIGITANDO : toque Morse
+    DIGITANDO --> AGUARDANDO : soltar botão
+
+    AGUARDANDO --> DIGITANDO : novo toque
+    AGUARDANDO --> AGUARDANDO : pausa ≥ 1s (dígito fechado)
+    AGUARDANDO --> VALIDANDO : pausa ≥ 1s ou Confirmar (4 dígitos)
+
+    VALIDANDO --> ACESSO_OK : senha válida
+    VALIDANDO --> ACESSO_NEGADO : senha inválida
+
+    ACESSO_OK --> IDLE : após 2s
+    ACESSO_NEGADO --> IDLE : após 2s

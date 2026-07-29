@@ -58,16 +58,19 @@ Desenvolver um sistema embarcado de controle de presença em sala de aula, execu
 
 ## 3. Requisitos Funcionais
 
+**RF1** — Decodificar dígitos Morse (0–9): toque < 0,3s = ponto; toque ≥ 0,3s = traço; 5 símbolos por dígito (ITU-R M.1677). *Critério:* sequência correta retorna o dígito no LCD e na interface web.
 
-| ID   | Descrição                                                                                                                                                                                                | Critério de Aceitação                                                                                                |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| RF1  | O sistema deve decodificar dígitos Morse (0–9) a partir de toques em um botão físico. Toque < 0,3s = ponto; toque ≥ 0,3s = traço. Cada dígito é formado por exatamente 5 símbolos (padrão ITU-R M.1677). | Pressionar a sequência correta de toques resulta no dígito esperado exibido no LCD e na interface web.               |
-| RF1b | Uma pausa ≥ 1,0s sem tocar fecha automaticamente o dígito atual e aguarda o próximo.                                                                                                                     | Após 1s de inatividade, o dígito é fechado sem necessidade de confirmação manual.                                    |
-| RF2  | Ao confirmar 4 dígitos, o sistema valida a senha contra o cadastro local. Se válida, registra a presença com nome, data e hora em arquivo CSV.                                                           | Presença registrada aparece no histórico da interface web e no CSV. LED verde acende e buzzer emite bipe de sucesso. |
-| RF2b | Se a senha for inválida, o sistema sinaliza o erro e retorna ao estado de espera.                                                                                                                        | LED vermelho acende, buzzer emite bipe de erro, nenhum registro é feito no CSV.                                      |
-| RF3  | O botão Cancelar limpa o buffer de entrada a qualquer momento, retornando o sistema ao estado inicial.                                                                                                   | Após pressionar Cancelar, LCD exibe "Digite a senha em Morse" e buffer é zerado.                                     |
-| RF4  | O sistema deve exibir feedback no display LCD 1602 durante toda a interação: símbolos digitados, senha parcial, resultado da validação.                                                                  | LCD atualiza a cada toque, exibindo o estado atual da entrada.                                                       |
-| RF5  | Uma interface web deve exibir em tempo real o estado do sistema (senha parcial, símbolo atual, resultado) e o histórico das últimas 10 presenças registradas.                                            | Página acessível em `http://<ip>:5000` atualiza automaticamente a cada 1 segundo.                                    |
+**RF1b** — Pausa ≥ 1,0s fecha o dígito atual automaticamente. *Critério:* após 1s de inatividade, dígito fechado sem confirmação manual.
+
+**RF2** — Com 4 dígitos confirmados, validar senha contra cadastro local; se válida, registrar presença (nome, data, hora) em CSV. *Critério:* LED verde, buzzer sucesso, presença no CSV e na interface web.
+
+**RF2b** — Senha inválida: sinalizar erro e retornar ao estado de espera. *Critério:* LED vermelho, buzzer erro, nenhum registro no CSV.
+
+**RF3** — Botão Cancelar limpa o buffer a qualquer momento. *Critério:* LCD exibe "Digite a senha em Morse", buffer zerado.
+
+**RF4** — Display LCD 1602 exibe feedback durante toda a interação (símbolos digitados, senha parcial, resultado). *Critério:* LCD atualiza a cada toque.
+
+**RF5** — Interface web exibe estado do sistema e histórico das últimas 10 presenças em tempo real. *Critério:* página em `http://<ip>:5000` atualiza a cada 1 segundo.
 
 
 ---
@@ -76,13 +79,13 @@ Desenvolver um sistema embarcado de controle de presença em sala de aula, execu
 
 ## 4. Requisitos Não Funcionais
 
+**RNF1** — Tempo de resposta da interface web inferior a 1 segundo. *Critério:* latência do endpoint `/status` < 1s (medido com DevTools).
 
-| ID   | Descrição                                                                                                                                              | Critério de Aceitação                                                                                                   |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| RNF1 | Tempo de resposta da interface web inferior a 1 segundo após a confirmação.                                                                            | Medição com DevTools do navegador: latência do endpoint `/status` < 1s.                                                 |
-| RNF2 | Debounce de ~50ms nos botões; sequências Morse inválidas (< 5 símbolos ou sem mapeamento) devem ser descartadas sem travar o sistema.                  | Pressionar o botão rapidamente não gera múltiplos eventos. Sistema retorna ao estado de espera após sequência inválida. |
-| RNF3 | Arquitetura orientada a eventos (sem busy-waiting): leitura de botões via callbacks, servidor web em thread separada da FSM, buzzer em thread própria. | Digitar a senha e acessar a interface web simultaneamente não causa travamento ou perda de eventos.                     |
-| RNF4 | Resiliência de hardware: ausência de LCD ou buzzer não deve impedir o funcionamento do sistema.                                                        | Sistema inicializado sem LCD conectado exibe mensagens no console; sem buzzer, continua sem áudio e sem erro fatal.     |
+**RNF2** — Debounce de ~50ms; sequências inválidas descartadas sem travar o sistema. *Critério:* toques rápidos não geram múltiplos eventos; sistema retorna ao estado de espera após sequência inválida.
+
+**RNF3** — Arquitetura orientada a eventos (sem busy-waiting): botões via callbacks, Flask em thread separada, buzzer em thread própria. *Critério:* digitar a senha e acessar a interface web simultaneamente não causa travamento.
+
+**RNF4** — Resiliência: ausência de LCD ou buzzer não impede o funcionamento. *Critério:* sem LCD, mensagens aparecem no console; sem buzzer, sistema continua sem erro fatal.
 
 
 ---
@@ -130,36 +133,7 @@ O sistema é composto por seis módulos Python com responsabilidades bem definid
 
 **Fluxo de estados da FSM:**
 
-```mermaid
-stateDiagram-v2
-    direction LR
-
-    [*] --> IDLE
-
-    IDLE --> DIGITANDO : toque Morse\n(pressionar)
-    DIGITANDO --> AGUARDANDO : soltar botão
-
-    AGUARDANDO --> DIGITANDO : novo toque\n(próximo símbolo)
-    AGUARDANDO --> AGUARDANDO : pausa ≥ 1s\n(dígito fechado, < 4 dígitos)
-    AGUARDANDO --> VALIDANDO : pausa ≥ 1s ou\nConfirmar\n(4 dígitos prontos)
-
-    VALIDANDO --> ACESSO_OK : senha válida
-    VALIDANDO --> ACESSO_NEGADO : senha inválida
-
-    ACESSO_OK --> IDLE : após 2s
-    ACESSO_NEGADO --> IDLE : após 2s
-
-    note right of ACESSO_OK
-        LED verde
-        Buzzer: bipe sucesso
-        Presença registrada
-    end note
-
-    note right of ACESSO_NEGADO
-        LED vermelho
-        Buzzer: bipe erro
-    end note
-```
+![Diagrama FSM](docs/diagramas/fsm.png)
 
 
 
@@ -300,26 +274,26 @@ A estratégia de validação é dividida em dois tipos: testes **unitários** (e
 
 Testam exclusivamente `morse_decoder.py`, sem dependência de GPIO. Executar com: `python3 -m unittest tests/test_morse_decoder.py -v`
 
-| ID    | Descrição                                              | Resultado Esperado                              | Status (S1) |
-| ----- | ------------------------------------------------------ | ----------------------------------------------- | ----------- |
-| TU-01 | Todos os 10 dígitos (0–9) decodificados corretamente   | Cada sequência de 5 símbolos retorna o dígito   | Passou      |
-| TU-02 | Senha de 4 dígitos montada corretamente                | `decoder.senha == "0123"` após 4 dígitos        | Passou      |
-| TU-03 | Sequência incompleta (< 5 símbolos) retorna ERRO       | `resultado == ERRO`, buffer limpo               | Passou      |
-| TU-04 | Sequência de 5 símbolos sem mapeamento retorna ERRO    | `resultado == ERRO`                             | Passou      |
-| TU-05 | Cancelar limpa buffer e senha                          | `decoder.senha == ""`, `buffer_simbolos == ""`  | Passou      |
-| TU-06 | Toques extras após senha completa são ignorados        | `decoder.senha == "0000"` sem alteração         | Passou      |
-| TU-07 | `verificar_timeout` não fecha dígito antes do prazo   | Retorna `None` imediatamente após o toque       | Passou      |
+| ID    | Descrição                                           | Status S1 |
+| ----- | --------------------------------------------------- | --------- |
+| TU-01 | Todos os 10 dígitos (0–9) decodificados corretamente | Passou    |
+| TU-02 | Senha de 4 dígitos montada corretamente             | Passou    |
+| TU-03 | Sequência incompleta (< 5 símbolos) retorna ERRO    | Passou    |
+| TU-04 | Sequência de 5 símbolos sem mapeamento retorna ERRO | Passou    |
+| TU-05 | Cancelar limpa buffer e senha                       | Passou    |
+| TU-06 | Toques extras após senha completa são ignorados     | Passou    |
+| TU-07 | Timeout não fecha dígito antes do prazo             | Passou    |
 
 ### 9.2 Testes de Hardware — Executados no Raspberry Pi
 
-| ID    | Requisito | Procedimento                                                         | Resultado Esperado                                       | Status   |
-| ----- | --------- | -------------------------------------------------------------------- | -------------------------------------------------------- | -------- |
-| TH-01 | RF1       | `.----` (dígito 1): 1 toque curto + 4 toques longos                 | Dígito "1" exibido no terminal; LED verde/vermelho pisca | S1: OK   |
-| TH-02 | RF1       | Sequência inválida `.-.-.` de 5 símbolos                            | Mensagem de erro; LED azul; buffer limpo                 | S1: OK   |
-| TH-03 | RF2       | Digitar senha cadastrada e confirmar                                 | LED verde, buzzer sucesso, presença registrada no CSV    | Semana 2 |
-| TH-04 | RF3       | Digitar 2 dígitos e pressionar Cancelar                             | Buffer zerado, sistema volta ao estado inicial           | Semana 2 |
-| TH-05 | RNF2      | Pressionar botão rapidamente várias vezes (debounce)                | Apenas eventos com intervalo > 50ms são registrados      | Semana 2 |
-| TH-06 | RNF4      | Iniciar o sistema sem LCD conectado                                 | Sistema inicia; mensagens no console; sem erro fatal     | Semana 3 |
+| ID    | Req.  | Procedimento                                      | Resultado Esperado                           | Status   |
+| ----- | ----- | ------------------------------------------------- | -------------------------------------------- | -------- |
+| TH-01 | RF1   | `.----`: 1 toque curto + 4 longos                | Dígito "1" no terminal; LED pisca            | S1: OK   |
+| TH-02 | RF1   | Sequência inválida `.-.-.` de 5 símbolos         | Mensagem de erro; LED azul; buffer limpo     | S1: OK   |
+| TH-03 | RF2   | Digitar senha cadastrada e confirmar             | LED verde, buzzer sucesso, presença no CSV   | Semana 2 |
+| TH-04 | RF3   | Digitar 2 dígitos e pressionar Cancelar          | Buffer zerado, sistema volta ao estado IDLE  | Semana 2 |
+| TH-05 | RNF2  | Pressionar botão rapidamente (debounce)          | Apenas eventos com intervalo > 50ms contam  | Semana 2 |
+| TH-06 | RNF4  | Iniciar sem LCD conectado                        | Sistema inicia; mensagens no console         | Semana 3 |
 
 ---
 
