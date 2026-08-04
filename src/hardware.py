@@ -11,7 +11,7 @@ Pinagem (BCM) — Freenove Projects Kit (FNK0054) + protoboard:
     ─────────────────────────────────────────────────
     Botão Morse         26      Botão S4 (Ch. 3 Buttons & LEDs)
     Botão Confirmar     16      Externo na protoboard
-    Botão Cancelar      21      Externo na protoboard
+    Botão Limpa         21      Externo na protoboard (apaga último dígito)
     RGB LED Red         5       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Green       6       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Blue        13      LED RGB da placa (Ch. 5 RGB LED)
@@ -31,7 +31,8 @@ from gpiozero.tones import Tone
 # ── Pinagem BCM (Freenove) ──────────────────────────────────────────
 PIN_BOTAO_MORSE = 26
 PIN_BOTAO_CONFIRMAR = 16
-PIN_BOTAO_CANCELAR = 21
+PIN_BOTAO_LIMPA = 21
+PIN_BOTAO_CANCELAR = PIN_BOTAO_LIMPA  # alias (mesmo pino)
 PIN_RGB_RED = 5
 PIN_RGB_GREEN = 6
 PIN_RGB_BLUE = 13
@@ -48,12 +49,12 @@ DURACAO_BIP_ERRO_S = 0.4
 
 
 class HardwareMorse:
-    """Periféricos GPIO da Semana 2: Morse + Confirmar + Cancelar + RGB + buzzer.
+    """Periféricos GPIO da Semana 2: Morse + Confirmar + Limpa + RGB + buzzer.
 
     Args:
         callback_toque: chamado com a duração (s) ao soltar o botão Morse.
         callback_confirmar: chamado ao pressionar Confirmar (opcional).
-        callback_cancelar: chamado ao pressionar Cancelar (opcional).
+        callback_cancelar: chamado ao pressionar Limpa (opcional; nome legado).
     """
 
     def __init__(self, callback_toque, callback_confirmar=None, callback_cancelar=None):
@@ -64,7 +65,7 @@ class HardwareMorse:
 
         self.botao_morse = Button(PIN_BOTAO_MORSE, bounce_time=DEBOUNCE_S)
         self.botao_confirmar = Button(PIN_BOTAO_CONFIRMAR, bounce_time=DEBOUNCE_S)
-        self.botao_cancelar = Button(PIN_BOTAO_CANCELAR, bounce_time=DEBOUNCE_S)
+        self.botao_cancelar = Button(PIN_BOTAO_LIMPA, bounce_time=DEBOUNCE_S)
 
         # Freenove RGB: cátodo comum → active_high=False (doc Ch. 5)
         self.rgb = RGBLED(

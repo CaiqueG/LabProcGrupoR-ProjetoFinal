@@ -60,6 +60,23 @@ class TestMorseDecoder(unittest.TestCase):
         resultado = decoder.fechar_digito_se_completo()
         self.assertEqual(resultado, ERRO)
 
+    def test_apagar_ultimo_digito(self):
+        """Limpa remove só o dígito mais recente da senha."""
+        decoder = MorseDecoder()
+        digitar(decoder, "-----")  # 0
+        decoder.fechar_digito_se_completo()
+        digitar(decoder, ".----")  # 1
+        decoder.fechar_digito_se_completo()
+        self.assertEqual(decoder.senha, "01")
+        self.assertEqual(decoder.apagar_ultimo_digito(), "1")
+        self.assertEqual(decoder.senha, "0")
+        self.assertEqual(decoder.buffer_simbolos, "")
+        digitar(decoder, "..")  # buffer parcial
+        self.assertEqual(decoder.apagar_ultimo_digito(), "0")
+        self.assertEqual(decoder.senha, "")
+        self.assertEqual(decoder.buffer_simbolos, "")  # buffer também zerado
+        self.assertIsNone(decoder.apagar_ultimo_digito())
+
     def test_cancelar_limpa_buffer_e_senha(self):
         decoder = MorseDecoder()
         digitar(decoder, "-----")

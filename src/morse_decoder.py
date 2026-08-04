@@ -54,9 +54,24 @@ class MorseDecoder:
         self.senha = ""              # dígitos já fechados e validados
         self.ultimo_evento = time.monotonic()
 
-    # Alias mais descritivo para uso externo (RF3 — Cancelamento)
+    # Alias — limpa tudo (após validação / reset completo)
     def limpar(self):
         self.reset()
+
+    def apagar_ultimo_digito(self):
+        """Botão Limpa: remove só o dígito mais recente já guardado na senha.
+
+        Também zera o buffer de símbolos em digitação (se houver), para não
+        misturar toques parciais com o dígito que acabou de ser apagado.
+        Retorna o dígito removido, ou None se a senha estava vazia.
+        """
+        self.buffer_simbolos = ""
+        self.ultimo_evento = time.monotonic()
+        if not self.senha:
+            return None
+        removido = self.senha[-1]
+        self.senha = self.senha[:-1]
+        return removido
 
     def senha_completa(self):
         return len(self.senha) >= MAX_DIGITS
@@ -96,8 +111,8 @@ class MorseDecoder:
 
         Usado pelo botão Confirmar para não esperar o timeout entre dígitos.
         Se o buffer estiver incompleto (< 5), NÃO descarta — preserva os
-        símbolos (lição Semana 1: só Cancelar limpa; pausa/Confirmar prematuro
-        não apaga digitação em andamento). Retorna None nesse caso.
+        símbolos. Para apagar, use o botão Limpa (apagar_ultimo_digito).
+        Retorna None se incompleto.
         """
         if len(self.buffer_simbolos) < SYMBOLS_PER_DIGIT:
             return None
