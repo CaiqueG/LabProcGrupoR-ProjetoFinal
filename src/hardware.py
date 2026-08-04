@@ -11,7 +11,7 @@ Pinagem (BCM) — Freenove Projects Kit (FNK0054) + protoboard:
     ─────────────────────────────────────────────────
     Botão Morse         26      Botão S4 (Ch. 3 Buttons & LEDs)
     Botão Confirmar     16      Externo na protoboard
-    Botão Limpa         21      Externo na protoboard (apaga último dígito)
+    Botão Limpa         20      Externo na protoboard (apaga último dígito)
     RGB LED Red         5       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Green       6       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Blue        13      LED RGB da placa (Ch. 5 RGB LED)
@@ -31,7 +31,7 @@ from gpiozero.tones import Tone
 # ── Pinagem BCM (Freenove) ──────────────────────────────────────────
 PIN_BOTAO_MORSE = 26
 PIN_BOTAO_CONFIRMAR = 16
-PIN_BOTAO_LIMPA = 21
+PIN_BOTAO_LIMPA = 20
 PIN_BOTAO_CANCELAR = PIN_BOTAO_LIMPA  # alias (mesmo pino)
 PIN_RGB_RED = 5
 PIN_RGB_GREEN = 6
@@ -42,10 +42,12 @@ DEBOUNCE_S = 0.05          # RNF2 — debounce de ~50ms
 DURACAO_PISCA_S = 0.1
 DURACAO_RESULTADO_S = 1.5
 
-FREQ_SUCESSO_HZ = 880
+# Três notas curtas (sucesso) — não deixa o buzzer ligado
+FREQ_SUCESSO_HZ = (659, 784, 988)  # Mi–Sol–Si
 FREQ_ERRO_HZ = 220
-DURACAO_BIP_SUCESSO_S = 0.15
-DURACAO_BIP_ERRO_S = 0.4
+DURACAO_BIP_SUCESSO_S = 0.12
+PAUSA_ENTRE_BIPES_S = 0.08
+DURACAO_BIP_ERRO_S = 0.35
 
 
 class HardwareMorse:
@@ -62,6 +64,7 @@ class HardwareMorse:
         self._callback_confirmar = callback_confirmar
         self._callback_cancelar = callback_cancelar
         self._inicio_toque = None
+        self._buzzer_lock = threading.Lock()
 
         self.botao_morse = Button(PIN_BOTAO_MORSE, bounce_time=DEBOUNCE_S)
         self.botao_confirmar = Button(PIN_BOTAO_CONFIRMAR, bounce_time=DEBOUNCE_S)
@@ -134,27 +137,43 @@ class HardwareMorse:
         self.rgb.off()
 
     # ── Buzzer (thread própria — RNF3 / RNF4) ──────────────────────
-    def _tocar(self, freq_hz, duracao_s):
+    def _parar_buzzer(self):
         if self.buzzer is None:
             return
         try:
-            self.buzzer.play(Tone(frequency=freq_hz))
-            time.sleep(duracao_s)
             self.buzzer.stop()
-        except Exception as exc:
-            print(f"[HARDWARE] Falha ao tocar buzzer: {exc}")
+        except Exception:
+            pass
+
+    def _tocar_notas(self, frequencias, duracao_s, pausa_s=0.0):
+        """Toca notas em sequência e SEMPRE para o buzzer no final."""
+        if self.buzzer is None:
+            return
+        with self._buzzer_lock:
+            try:
+                for freq in frequencias:
+                    self.buzzer.play(Tone(frequency=freq))
+                    time.sleep(duracao_s)
+                    self.buzzer.stop()
+                    if pausa_s > 0:
+                        time.sleep(pausa_s)
+            except Exception as exc:
+                print(f"[HARDWARE] Falha ao tocar buzzer: {exc}")
+            finally:
+                self._parar_buzzer()
 
     def bip_sucesso(self):
+        """Três bipes curtos ascendentes — senha correta (não fica infinito)."""
         threading.Thread(
-            target=self._tocar,
-            args=(FREQ_SUCESSO_HZ, DURACAO_BIP_SUCESSO_S),
+            target=self._tocar_notas,
+            args=(FREQ_SUCESSO_HZ, DURACAO_BIP_SUCESSO_S, PAUSA_ENTRE_BIPES_S),
             daemon=True,
         ).start()
 
     def bip_erro(self):
         threading.Thread(
-            target=self._tocar,
-            args=(FREQ_ERRO_HZ, DURACAO_BIP_ERRO_S),
+            target=self._tocar_notas,
+            args=((FREQ_ERRO_HZ,), DURACAO_BIP_ERRO_S, 0.0),
             daemon=True,
         ).start()
 
@@ -169,11 +188,13 @@ class HardwareMorse:
     # ── Encerramento limpo ─────────────────────────────────────────
     def cleanup(self):
         self.apagar_leds()
+        self._parar_buzzer()
         if self.buzzer is not None:
             try:
                 self.buzzer.close()
             except Exception:
                 pass
+            self.buzzer = None
         for botao in (self.botao_morse, self.botao_confirmar, self.botao_cancelar):
             try:
                 botao.close()

@@ -2,14 +2,14 @@
 """
 demo_validacao.py — Demonstração Semana 2: Morse + LCD + DB + buzzer.
 
-  - Botão Limpa (GPIO 21): apaga só o dígito mais recente da senha.
+  - Botão Limpa (GPIO 20): apaga só o dígito mais recente da senha.
   - Timeout NÃO descarta dígito incompleto; só fecha após 5 símbolos + pausa ≥ 1s.
   - Confirmar valida senha completa (ou fecha dígito com 5 símbolos sem esperar o gap).
 
 Hardware (Freenove FNK0054 + protoboard):
     Botão Morse (S4)  -> GPIO 26
     Botão Confirmar   -> GPIO 16  (protoboard)
-    Botão Limpa       -> GPIO 21  (protoboard)
+    Botão Limpa       -> GPIO 20  (protoboard)
     RGB LED           -> GPIO 5/6/13
     Buzzer            -> GPIO 12
     LCD 1602 I2C      -> SDA=GPIO2, SCL=GPIO3  (opcional — fallback console)
@@ -129,13 +129,18 @@ def main():
                 lcd.mostrar("Senha invalida", senha)
                 hw.sinalizar_falha()
 
-            time.sleep(DURACAO_RESULTADO_S)
+        # Fora do lock: espera o feedback (3 bipes) e reinicia
+        time.sleep(DURACAO_RESULTADO_S)
+        with lock:
             decoder.limpar()
             hw.apagar_leds()
+            hw._parar_buzzer()
             _mostrar_idle()
 
     def ao_limpar():
-        """Apaga só o último dígito já guardado na senha (GPIO 21)."""
+        """Apaga só o último dígito já guardado na senha (GPIO 20).
+        Ex.: senha 55__ → Limpa → 5___
+        """
         with lock:
             removido = decoder.apagar_ultimo_digito()
             hw.apagar_leds()
@@ -172,11 +177,11 @@ def main():
     _mostrar_idle()
     print("=" * 56)
     print("  Demo Validação — Semana 2")
-    print("  Morse S4=GPIO26 | Confirmar=GPIO16 | Limpa=GPIO21")
+    print("  Morse S4=GPIO26 | Confirmar=GPIO16 | Limpa=GPIO20")
     print("  RGB 5/6/13 | Buzzer=GPIO12 | LCD I2C (opcional)")
-    print("  Limpa = apaga so o ultimo digito da senha")
-    print("  Senhas: 1234, 5678, 0192")
-    print("  Teste rapido (so pontos): 5555 = ..... x4")
+    print("  Limpa = apaga so o ultimo digito (ex: 55 -> 5)")
+    print("  Sucesso = 3 bipes curtos (nao infinito)")
+    print("  Senhas: 1234, 5678, 0192 | teste: 5555 (..... x4)")
     print("  Ctrl+C para encerrar")
     print("=" * 56 + "\n")
 
