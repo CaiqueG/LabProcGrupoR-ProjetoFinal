@@ -129,12 +129,12 @@ def main():
                 lcd.mostrar("Senha invalida", senha)
                 hw.sinalizar_falha()
 
-        # Fora do lock: espera o feedback (3 bipes) e reinicia
+        # Fora do lock: espera o feedback e reinicia
         time.sleep(DURACAO_RESULTADO_S)
         with lock:
             decoder.limpar()
             hw.apagar_leds()
-            hw._parar_buzzer()
+            hw.parar_buzzer()
             _mostrar_idle()
 
     def ao_limpar():
