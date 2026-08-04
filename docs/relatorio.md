@@ -132,8 +132,7 @@ O sistema é composto por seis módulos Python com responsabilidades bem definid
 
 **Fluxo de estados da FSM:**
 
-![Diagrama FSM](docs/diagramas/fsm.png)
-
+![Diagrama FSM](diagramas/fsm.png)
 
 
 > O botão **Cancelar** retorna a FSM a IDLE a partir de qualquer estado (transição omitida do diagrama para legibilidade).
