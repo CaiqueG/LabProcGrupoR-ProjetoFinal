@@ -3,6 +3,7 @@
 demo_validacao.py — Demonstração Semana 2: Morse + LCD + DB + buzzer.
 
   - Botão Limpa (GPIO 20): apaga só o dígito mais recente da senha.
+  - Botão Cancelar (GPIO 21): zera senha + buffer por completo.
   - Timeout NÃO descarta dígito incompleto; só fecha após 5 símbolos + pausa ≥ 1s.
   - Confirmar valida senha completa (ou fecha dígito com 5 símbolos sem esperar o gap).
 
@@ -10,6 +11,7 @@ Hardware (Freenove FNK0054 + protoboard):
     Botão Morse (S4)  -> GPIO 26
     Botão Confirmar   -> GPIO 16  (protoboard)
     Botão Limpa       -> GPIO 20  (protoboard)
+    Botão Cancelar    -> GPIO 21  (protoboard)
     RGB LED           -> GPIO 5/6/13
     Buzzer            -> GPIO 12
     LCD 1602 I2C      -> SDA=GPIO2, SCL=GPIO3  (opcional — fallback console)
@@ -107,7 +109,7 @@ def main():
                 lcd.mostrar("Digito incompleto", f"Buf: {decoder.buffer_simbolos}")
                 print(
                     f"  Digito incompleto [{decoder.buffer_simbolos}] — "
-                    "continue ou Limpa.",
+                    "continue, Limpa ou Cancelar.",
                     flush=True,
                 )
                 return
@@ -138,9 +140,7 @@ def main():
             _mostrar_idle()
 
     def ao_limpar():
-        """Apaga só o último dígito já guardado na senha (GPIO 20).
-        Ex.: senha 55__ → Limpa → 5___
-        """
+        """GPIO 20 — apaga só o último dígito da senha (ex.: 55__ → 5___)."""
         with lock:
             removido = decoder.apagar_ultimo_digito()
             hw.apagar_leds()
@@ -158,6 +158,17 @@ def main():
             time.sleep(0.3)
             _mostrar_senha()
 
+    def ao_cancelar():
+        """GPIO 21 — zera senha e buffer por completo."""
+        with lock:
+            decoder.limpar()
+            hw.apagar_leds()
+            hw.parar_buzzer()
+            print("  Cancelar: senha e buffer zerados.", flush=True)
+            lcd.mostrar("Cancelado", "Digite a senha")
+            time.sleep(0.4)
+            _mostrar_idle()
+
     def loop_timeout():
         while not parar.is_set():
             time.sleep(POLL_INTERVAL_S)
@@ -169,7 +180,8 @@ def main():
     hw = HardwareMorse(
         callback_toque=ao_receber_toque,
         callback_confirmar=ao_confirmar,
-        callback_cancelar=ao_limpar,
+        callback_limpar=ao_limpar,
+        callback_cancelar=ao_cancelar,
     )
     t = threading.Thread(target=loop_timeout, daemon=True)
     t.start()
@@ -177,10 +189,10 @@ def main():
     _mostrar_idle()
     print("=" * 56)
     print("  Demo Validação — Semana 2")
-    print("  Morse S4=GPIO26 | Confirmar=GPIO16 | Limpa=GPIO20")
+    print("  Morse=GPIO26 | Confirmar=GPIO16")
+    print("  Limpa=GPIO20 (ultimo digito) | Cancelar=GPIO21 (zera tudo)")
     print("  RGB 5/6/13 | Buzzer=GPIO12 | LCD I2C (opcional)")
-    print("  Limpa = apaga so o ultimo digito (ex: 55 -> 5)")
-    print("  Sucesso = 3 bipes curtos (nao infinito)")
+    print("  Sucesso = 3 bipes curtos")
     print("  Senhas: 1234, 5678, 0192 | teste: 5555 (..... x4)")
     print("  Ctrl+C para encerrar")
     print("=" * 56 + "\n")

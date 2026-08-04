@@ -20,7 +20,8 @@ Pinagem BCM conforme a documentação Freenove ([Buttons & LEDs](https://docs.fr
 |---|---|---|
 | Botão Morse | GPIO 26 | Botão **S4** da placa Freenove |
 | Botão Confirmar | GPIO 16 | Botão externo na protoboard |
-| Botão Cancelar | GPIO 20 | Botão **Limpa** — apaga só o último dígito da senha |
+| Botão Limpa | GPIO 20 | Apaga só o **último dígito** da senha |
+| Botão Cancelar | GPIO 21 | Zera senha + buffer por completo |
 | RGB LED Red | GPIO 5 | LED RGB da placa (`active_high=False`) |
 | RGB LED Green | GPIO 6 | LED RGB da placa |
 | RGB LED Blue | GPIO 13 | LED RGB da placa |
@@ -80,8 +81,9 @@ Para encerrar: `Ctrl+C` — o programa libera os pinos GPIO antes de sair.
 ## Como usar (Semana 2)
 
 1. **Digitar a senha**: toque **curto** (< 0,3s) = `.`, **longo** (≥ 0,3s) = `-`. Exatamente 5 símbolos por dígito. Pausa no meio do dígito **preserva** o buffer; só após 5 símbolos + pausa ≥ 1s o dígito fecha (lição Semana 1).
-2. **Limpa** (GPIO 20): apaga só o **último dígito** já guardado na senha (ex.: `55__` → `5___`).
-3. **Confirmar** (GPIO 16): com 4 dígitos, valida e registra; com buffer incompleto, **não apaga** — só avisa.
+2. **Limpa** (GPIO 20): apaga só o **último dígito** já guardado (ex.: `55__` → `5___`).
+3. **Cancelar** (GPIO 21): zera senha e buffer por completo.
+4. **Confirmar** (GPIO 16): com 4 dígitos, valida e registra; com buffer incompleto, **não apaga** — só avisa.
 
 ### Tabela Morse numérica (ITU-R M.1677)
 

@@ -12,6 +12,7 @@ Pinagem (BCM) — Freenove Projects Kit (FNK0054) + protoboard:
     Botão Morse         26      Botão S4 (Ch. 3 Buttons & LEDs)
     Botão Confirmar     16      Externo na protoboard
     Botão Limpa         20      Externo na protoboard (apaga último dígito)
+    Botão Cancelar      21      Externo na protoboard (zera senha + buffer)
     RGB LED Red         5       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Green       6       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Blue        13      LED RGB da placa (Ch. 5 RGB LED)
@@ -31,7 +32,7 @@ from gpiozero import Button, RGBLED, Buzzer
 PIN_BOTAO_MORSE = 26
 PIN_BOTAO_CONFIRMAR = 16
 PIN_BOTAO_LIMPA = 20
-PIN_BOTAO_CANCELAR = PIN_BOTAO_LIMPA  # alias (mesmo pino)
+PIN_BOTAO_CANCELAR = 21
 PIN_RGB_RED = 5
 PIN_RGB_GREEN = 6
 PIN_RGB_BLUE = 13
@@ -49,24 +50,33 @@ DURACAO_BIP_ERRO_S = 0.40
 
 
 class HardwareMorse:
-    """Periféricos GPIO da Semana 2: Morse + Confirmar + Limpa + RGB + buzzer.
+    """Periféricos GPIO: Morse + Confirmar + Limpa + Cancelar + RGB + buzzer.
 
     Args:
         callback_toque: chamado com a duração (s) ao soltar o botão Morse.
         callback_confirmar: chamado ao pressionar Confirmar (opcional).
-        callback_cancelar: chamado ao pressionar Limpa (opcional; nome legado).
+        callback_limpar: chamado ao pressionar Limpa — último dígito (opcional).
+        callback_cancelar: chamado ao pressionar Cancelar — zera tudo (opcional).
     """
 
-    def __init__(self, callback_toque, callback_confirmar=None, callback_cancelar=None):
+    def __init__(
+        self,
+        callback_toque,
+        callback_confirmar=None,
+        callback_limpar=None,
+        callback_cancelar=None,
+    ):
         self._callback_toque = callback_toque
         self._callback_confirmar = callback_confirmar
+        self._callback_limpar = callback_limpar
         self._callback_cancelar = callback_cancelar
         self._inicio_toque = None
         self._buzzer_lock = threading.Lock()
 
         self.botao_morse = Button(PIN_BOTAO_MORSE, bounce_time=DEBOUNCE_S)
         self.botao_confirmar = Button(PIN_BOTAO_CONFIRMAR, bounce_time=DEBOUNCE_S)
-        self.botao_cancelar = Button(PIN_BOTAO_LIMPA, bounce_time=DEBOUNCE_S)
+        self.botao_limpar = Button(PIN_BOTAO_LIMPA, bounce_time=DEBOUNCE_S)
+        self.botao_cancelar = Button(PIN_BOTAO_CANCELAR, bounce_time=DEBOUNCE_S)
 
         # Freenove RGB: cátodo comum → active_high=False (doc Ch. 5)
         self.rgb = RGBLED(
@@ -84,6 +94,7 @@ class HardwareMorse:
         self.botao_morse.when_pressed = self._ao_pressionar_morse
         self.botao_morse.when_released = self._ao_soltar_morse
         self.botao_confirmar.when_pressed = self._ao_confirmar
+        self.botao_limpar.when_pressed = self._ao_limpar
         self.botao_cancelar.when_pressed = self._ao_cancelar
 
     # ── Callbacks internos ─────────────────────────────────────────
@@ -100,6 +111,10 @@ class HardwareMorse:
     def _ao_confirmar(self):
         if self._callback_confirmar:
             self._callback_confirmar()
+
+    def _ao_limpar(self):
+        if self._callback_limpar:
+            self._callback_limpar()
 
     def _ao_cancelar(self):
         if self._callback_cancelar:
@@ -187,7 +202,12 @@ class HardwareMorse:
             except Exception:
                 pass
             self.buzzer = None
-        for botao in (self.botao_morse, self.botao_confirmar, self.botao_cancelar):
+        for botao in (
+            self.botao_morse,
+            self.botao_confirmar,
+            self.botao_limpar,
+            self.botao_cancelar,
+        ):
             try:
                 botao.close()
             except Exception:
