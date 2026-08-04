@@ -1,27 +1,20 @@
 #!/usr/bin/env python3
 """
-demo_morse.py — Demonstração interativa do decodificador Morse (Semana 1).
+demo_morse.py — Demonstração do decodificador Morse (base Semana 1, timeout S2).
 
-Executa no Raspberry Pi com botão e LEDs conectados.
-Não depende de LCD, buzzer, banco de dados nem Flask.
+Alinhado à conclusão da Semana 1:
+  - Pausa com < 5 símbolos NÃO descarta o buffer.
+  - Dígito só fecha após 5 símbolos + pausa ≥ 1s (intervalo entre dígitos).
 
-Hardware necessário (todos já na placa Freenove — nenhum fio extra):
+Hardware (placa Freenove):
     Botão Morse  -> GPIO 26  (botão S4)
-    RGB LED Red  -> GPIO 5   (traço = vermelho)
-    RGB LED Green-> GPIO 6   (ponto  = verde)
-    RGB LED Blue -> GPIO 13  (erro   = azul)
+    RGB LED Red  -> GPIO 5
+    RGB LED Green-> GPIO 6
+    RGB LED Blue -> GPIO 13
 
-Como usar:
+Para validação completa (Cancelar/Confirmar/LCD/DB), use demo_validacao.py.
+
     python3 src/demo_morse.py
-
-Fluxo:
-    1. Pressione o botão Morse:
-       - Toque curto (< 0,3s) = ponto  '.'  -> LED verde pisca
-       - Toque longo (>= 0,3s) = traço '-'  -> LED vermelho pisca
-    2. Após 5 símbolos, o dígito decodificado é exibido no terminal.
-    3. Após 1s sem tocar, o dígito atual é fechado automaticamente.
-    4. Sequência inválida -> mensagem de erro, buffer limpo.
-    5. Ctrl+C encerra o programa.
 """
 
 import sys
@@ -31,10 +24,10 @@ import threading
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from morse_decoder import MorseDecoder, ERRO, DIGIT_GAP_TIMEOUT
+from morse_decoder import MorseDecoder, ERRO, SYMBOLS_PER_DIGIT
 from hardware import HardwareMorse
 
-POLL_INTERVAL_S = 0.1   # intervalo de verificação de timeout
+POLL_INTERVAL_S = 0.1
 
 
 def main():
@@ -53,45 +46,36 @@ def main():
             print(f"  - (traço  — {duracao:.2f}s)", flush=True)
             hw.piscar_traco()
 
-        print(f"  Buffer atual: [{decoder.buffer_simbolos}]", flush=True)
-
-        if len(decoder.buffer_simbolos) == 5:
-            _fechar_digito()
-
-    def _fechar_digito():
-        resultado = decoder.fechar_digito_se_completo()
-        if resultado == ERRO:
-            print("  ✗ Sequência inválida — buffer limpo.\n", flush=True)
-            hw.piscar_erro()
-        else:
-            senha_parcial.append(resultado)
-            print(f"  ✓ Dígito: {resultado}  |  Senha até agora: "
-                  f"{''.join(senha_parcial)}{'_' * (4 - len(senha_parcial))}\n",
-                  flush=True)
+        buf = decoder.buffer_simbolos
+        print(f"  Buffer atual: [{buf}]", flush=True)
+        if len(buf) == SYMBOLS_PER_DIGIT:
+            print("  5 simbolos — aguarde ~1s para fechar o digito.", flush=True)
 
     def loop_timeout():
         while not parar.is_set():
             time.sleep(POLL_INTERVAL_S)
             resultado = decoder.verificar_timeout()
             if resultado == ERRO:
-                print("  ✗ Sequência inválida (timeout) — buffer limpo.\n",
-                      flush=True)
+                print("  ✗ Sequência inválida — buffer limpo.\n", flush=True)
                 hw.piscar_erro()
             elif resultado is not None:
                 senha_parcial.append(resultado)
-                print(f"  ✓ Dígito (timeout): {resultado}  |  Senha: "
-                      f"{''.join(senha_parcial)}{'_' * (4 - len(senha_parcial))}\n",
-                      flush=True)
+                print(
+                    f"  ✓ Dígito: {resultado}  |  Senha: "
+                    f"{''.join(senha_parcial)}{'_' * (4 - len(senha_parcial))}\n",
+                    flush=True,
+                )
 
-    hw    = HardwareMorse(callback_toque=ao_receber_toque)
+    hw = HardwareMorse(callback_toque=ao_receber_toque)
     parar = threading.Event()
-    t     = threading.Thread(target=loop_timeout, daemon=True)
+    t = threading.Thread(target=loop_timeout, daemon=True)
     t.start()
 
     print("=" * 50)
-    print("  Demo Morse — Semana 1")
-    print("  Botão S4 GPIO 26 | RGB: verde=GPIO6  vermelho=GPIO5  azul=GPIO13")
-    print("  Toque curto = .  |  Toque longo = -")
+    print("  Demo Morse — timeout revisado (S2)")
+    print("  Botão S4 GPIO 26 | RGB: G6 R5 B13")
+    print("  Curto = .  |  Longo = -")
+    print("  Pausa < 5 simbolos: buffer preservado")
     print("  Ctrl+C para encerrar")
     print("=" * 50 + "\n")
 

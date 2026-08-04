@@ -60,7 +60,7 @@ Desenvolver um sistema embarcado de controle de presença em sala de aula, execu
 
 **RF1** — Decodificar dígitos Morse (0–9): toque < 0,3s = ponto; toque ≥ 0,3s = traço; 5 símbolos por dígito (ITU-R M.1677). *Critério:* sequência correta retorna o dígito no LCD e na interface web.
 
-**RF1b** — Pausa ≥ 1,0s fecha o dígito atual automaticamente. *Critério:* após 1s de inatividade, dígito fechado sem confirmação manual.
+**RF1b** — Pausa ≥ 1,0s fecha o dígito **somente se já houver 5 símbolos** (intervalo entre dígitos). Pausa com buffer incompleto preserva os símbolos. *Critério:* demorar entre toques do mesmo dígito não descarta a digitação; após o 5º símbolo + 1s, dígito é fechado.
 
 **RF2** — Com 4 dígitos confirmados, validar senha contra cadastro local; se válida, registrar presença (nome, data, hora) em CSV. *Critério:* LED verde, buzzer sucesso, presença no CSV e na interface web.
 
@@ -101,15 +101,14 @@ Desenvolver um sistema embarcado de controle de presença em sala de aula, execu
 O sistema é executado inteiramente no **Raspberry Pi 3 Model B** (SoC Broadcom BCM2837, ARM Cortex-A53 quad-core 1,2 GHz, 1 GB RAM, Raspberry Pi OS). Os periféricos são conectados diretamente aos pinos GPIO:
 
 
-| Componente       | Interface     | Pino BCM        | Função                             |
-| ---------------- | ------------- | --------------- | ---------------------------------- |
-| Botão Morse      | GPIO digital  | 26              | Botão S4 da placa Freenove         |
-| Botão Confirmar  | GPIO digital  | 18              | Botão externo na protoboard        |
-| Botão Cancelar   | GPIO digital  | 23              | Botão externo na protoboard        |
-| LED Verde        | GPIO digital  | 17              | LED da placa Freenove              |
-| LED Vermelho     | GPIO digital  | 27              | LED externo na protoboard          |
-| Buzzer passivo   | GPIO digital  | 12              | Conector Buzzer da placa Freenove  |
-| Display LCD 1602 | I2C (SDA/SCL) | GPIO 2 / GPIO 3 | Conector I2C da placa Freenove     |
+| Componente       | Interface     | Pino BCM        | Função                                      |
+| ---------------- | ------------- | --------------- | ------------------------------------------- |
+| Botão Morse      | GPIO digital  | 26              | Botão S4 da placa Freenove (doc Ch. 3)      |
+| Botão Confirmar  | GPIO digital  | 18              | Botão externo na protoboard                 |
+| Botão Cancelar   | GPIO digital  | 23              | Botão externo na protoboard                 |
+| RGB LED R/G/B    | GPIO digital  | 5 / 6 / 13      | LED RGB Freenove (`active_high=False`, Ch. 5) |
+| Buzzer passivo   | GPIO digital  | 12              | Conector Buzzer da placa Freenove           |
+| Display LCD 1602 | I2C (SDA/SCL) | GPIO 2 / GPIO 3 | Conector I2C da placa Freenove              |
 
 
 > **Nota sobre GPIO:** a decisão de usar `gpiozero` como biblioteca padrão em todos os módulos foi tomada a partir do conflito de drivers relatado na Aula 10, onde o uso simultâneo de `RPi.GPIO` e outra biblioteca causava falha na inicialização dos pinos.
@@ -258,9 +257,52 @@ O comportamento desejado é:
 
 Essa mudança requer revisão da lógica de `verificar_timeout()` em `morse_decoder.py` e será implementada na Semana 2.
 
-### 8.4 Planejamento da Semana 2
+### 8.4 Entrega da Semana 2 — Feedback visual e persistência
 
-Com base nas lições aprendidas, a Semana 2 incluirá: botão físico de cancelamento; revisão do timeout (pausa intra-dígito não descarta símbolos, apenas o intervalo entre dígitos completos dispara o fechamento); integração do LCD 1602 e buzzer; módulo `database.py` para validação de senha; e script `demo_validacao.py` unificando todos os componentes.
+**Objetivo:** aplicar as correções de usabilidade descobertas na Semana 1 e integrar LCD, buzzer, botões Confirmar/Cancelar e validação de senha com registro em CSV.
+
+**A Semana 2 parte das conclusões da Semana 1** — não apenas de novos requisitos. As duas limitações identificadas no teste físico mudaram a implementação:
+
+| Lição Semana 1 | Mudança na implementação (Semana 2) |
+| -------------- | ----------------------------------- |
+| Sem botão para limpar o buffer | Botão **Cancelar** (GPIO 23): única forma de descartar digitação em andamento (`decoder.limpar()`). Confirmar **não** apaga buffer incompleto. |
+| Timeout intra-dígito descartava símbolos | `verificar_timeout()` ignora buffer com < 5 símbolos (espera indefinida). Só fecha após exatamente 5 símbolos + pausa ≥ 1s (intervalo **entre** dígitos). Demos não fecham mais no 5º toque imediato. |
+| `fechar_digito_se_completo` limpava incompleto | Agora retorna `None` e **preserva** o buffer se houver < 5 símbolos (só Cancelar limpa). |
+
+**Artefatos entregues:** `src/lcd_driver.py`, `src/lcd1602_driver.py`, `src/database.py`, `src/data/alunos.json`, `src/demo_validacao.py`; atualizações em `src/hardware.py` e `src/morse_decoder.py`.
+
+**Demais integrações desta semana:**
+
+| Item | Descrição |
+| ---- | --------- |
+| Botão Confirmar | GPIO 18 — valida senha de 4 dígitos; se houver 5 símbolos pendentes, fecha o dígito sem esperar o gap |
+| LCD 1602 I2C | Feedback em duas linhas; fallback para console se I2C ausente (RNF4) |
+| Buzzer | GPIO 12 via `TonalBuzzer` (gpiozero), em thread própria (RNF3) |
+| `database.py` | Valida senha em JSON e grava presença em CSV |
+| Biblioteca GPIO | Apenas `gpiozero` — sem `RPi.GPIO` |
+
+**Pinagem Freenove (BCM):** Morse S4=26; RGB=5/6/13 (`active_high=False`); Buzzer=12; Confirmar=18; Cancelar=23; LCD I2C SDA/SCL=2/3.
+
+**Demo:** `python3 src/demo_validacao.py`
+
+**Requisitos cobertos nesta semana:** RF2, RF2b, RF3, RF4 (parcial — LCD+LED+buzzer), RNF2 (timeout revisado), RNF4 (LCD/buzzer opcionais).
+
+### 8.5 Resultados Obtidos — Semana 2
+
+Testes unitários (máquina de desenvolvimento), incluindo os novos casos de timeout e database — **12 testes OK**:
+
+```
+test_timeout_nao_descarta_digito_incompleto ... ok
+test_timeout_fecha_apenas_digito_completo ... ok
+test_validar_senha_conhecida ... ok
+test_validar_senha_desconhecida ... ok
+test_registrar_e_ler_historico ... ok
+(+ 7 testes da Semana 1)
+
+Ran 12 tests in 0.012s — OK
+```
+
+Testes de hardware previstos na placa: TH-03 (senha válida), TH-04 (cancelar), TH-05 (debounce).
 
 ---
 
@@ -274,15 +316,17 @@ A estratégia de validação é dividida em dois tipos: testes **unitários** (e
 
 Testam exclusivamente `morse_decoder.py`, sem dependência de GPIO. Executar com: `python3 -m unittest tests/test_morse_decoder.py -v`
 
-| ID    | Descrição                                           | Status S1 |
-| ----- | --------------------------------------------------- | --------- |
-| TU-01 | Todos os 10 dígitos (0–9) decodificados corretamente | Passou    |
-| TU-02 | Senha de 4 dígitos montada corretamente             | Passou    |
-| TU-03 | Sequência incompleta (< 5 símbolos) retorna ERRO    | Passou    |
-| TU-04 | Sequência de 5 símbolos sem mapeamento retorna ERRO | Passou    |
-| TU-05 | Cancelar limpa buffer e senha                       | Passou    |
-| TU-06 | Toques extras após senha completa são ignorados     | Passou    |
-| TU-07 | Timeout não fecha dígito antes do prazo             | Passou    |
+| ID    | Descrição                                           | Status |
+| ----- | --------------------------------------------------- | ------ |
+| TU-01 | Todos os 10 dígitos (0–9) decodificados corretamente | S1 OK  |
+| TU-02 | Senha de 4 dígitos montada corretamente             | S1 OK  |
+| TU-03 | Fechar incompleto preserva buffer (não apaga)       | S2 OK  |
+| TU-04 | Sequência de 5 símbolos sem mapeamento retorna ERRO | S1 OK  |
+| TU-05 | Cancelar limpa buffer e senha                       | S1 OK  |
+| TU-06 | Toques extras após senha completa são ignorados     | S1 OK  |
+| TU-07 | Timeout não fecha dígito antes do prazo             | S1 OK  |
+| TU-08 | Timeout não descarta dígito incompleto (< 5)        | S2 OK  |
+| TU-09 | Timeout fecha apenas dígito completo (5 + pausa)    | S2 OK  |
 
 ### 9.2 Testes de Hardware — Executados no Raspberry Pi
 
@@ -290,9 +334,9 @@ Testam exclusivamente `morse_decoder.py`, sem dependência de GPIO. Executar com
 | ----- | ----- | ------------------------------------------------- | -------------------------------------------- | -------- |
 | TH-01 | RF1   | `.----`: 1 toque curto + 4 longos                | Dígito "1" no terminal; LED pisca            | S1: OK   |
 | TH-02 | RF1   | Sequência inválida `.-.-.` de 5 símbolos         | Mensagem de erro; LED azul; buffer limpo     | S1: OK   |
-| TH-03 | RF2   | Digitar senha cadastrada e confirmar             | LED verde, buzzer sucesso, presença no CSV   | Semana 2 |
-| TH-04 | RF3   | Digitar 2 dígitos e pressionar Cancelar          | Buffer zerado, sistema volta ao estado IDLE  | Semana 2 |
-| TH-05 | RNF2  | Pressionar botão rapidamente (debounce)          | Apenas eventos com intervalo > 50ms contam  | Semana 2 |
+| TH-03 | RF2   | Digitar senha cadastrada e confirmar             | LED verde, buzzer sucesso, presença no CSV   | A validar na placa |
+| TH-04 | RF3   | Digitar 2 dígitos e pressionar Cancelar          | Buffer zerado, sistema volta ao estado IDLE  | A validar na placa |
+| TH-05 | RNF2  | Pressionar botão rapidamente (debounce)          | Apenas eventos com intervalo > 50ms contam  | A validar na placa |
 | TH-06 | RNF4  | Iniciar sem LCD conectado                        | Sistema inicia; mensagens no console         | Semana 3 |
 
 ---

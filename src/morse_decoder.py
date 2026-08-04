@@ -14,13 +14,18 @@ Tabela Morse numérica (padrão internacional ITU-R M.1677 — 5 símbolos/dígi
     2 ..---   7 --...
     3 ...--   8 ---..
     4 ....-   9 ----.
+
+Semana 2 — timeout revisado:
+    A pausa intra-dígito NÃO descarta símbolos incompletos (< 5).
+    O timeout de DIGIT_GAP_TIMEOUT só fecha o dígito após exatamente
+    5 símbolos (intervalo entre dígitos completos).
 """
 
 import time
 
 # ── Parâmetros de tempo (RF1 / RNF2) ────────────────────────────────
 DOT_MAX_DURATION = 0.3      # toque < 0.3s  -> ponto (.)
-DIGIT_GAP_TIMEOUT = 1.0     # pausa >= 1.0s -> fecha o dígito atual
+DIGIT_GAP_TIMEOUT = 1.0     # pausa >= 1.0s -> fecha dígito completo
 SYMBOLS_PER_DIGIT = 5
 MAX_DIGITS = 4
 
@@ -71,11 +76,15 @@ class MorseDecoder:
 
     def verificar_timeout(self):
         """Deve ser chamado periodicamente (ex.: a cada 100ms) pela FSM.
-        Fecha automaticamente o dígito atual quando o usuário faz uma
-        pausa >= DIGIT_GAP_TIMEOUT depois do último toque.
-        Retorna: dígito fechado ('0'..'9'), ERRO (sequência inválida
-        descartada) ou None (nada aconteceu)."""
-        if not self.buffer_simbolos:
+
+        Semana 2: pausa com buffer incompleto (< 5 símbolos) NÃO fecha
+        nem descarta — o usuário pode demorar entre toques do mesmo dígito.
+        O timeout só fecha quando já há exatamente 5 símbolos (dígito
+        completo aguardando o intervalo entre dígitos).
+
+        Retorna: dígito ('0'..'9'), ERRO (5 símbolos sem mapeamento) ou None.
+        """
+        if len(self.buffer_simbolos) < SYMBOLS_PER_DIGIT:
             return None
         ocioso = time.monotonic() - self.ultimo_evento
         if ocioso < DIGIT_GAP_TIMEOUT:
@@ -83,11 +92,14 @@ class MorseDecoder:
         return self._fechar_buffer()
 
     def fechar_digito_se_completo(self):
-        """Chamado pelo botão Confirmar: fecha imediatamente o buffer
-        atual, sem esperar o timeout, desde que ele já tenha os 5
-        símbolos. Se o buffer estiver incompleto (mas não vazio), é
-        descartado como sequência inválida (RNF2 — não trava o sistema)."""
-        if not self.buffer_simbolos:
+        """Fecha o dígito imediatamente se já houver exatamente 5 símbolos.
+
+        Usado pelo botão Confirmar para não esperar o timeout entre dígitos.
+        Se o buffer estiver incompleto (< 5), NÃO descarta — preserva os
+        símbolos (lição Semana 1: só Cancelar limpa; pausa/Confirmar prematuro
+        não apaga digitação em andamento). Retorna None nesse caso.
+        """
+        if len(self.buffer_simbolos) < SYMBOLS_PER_DIGIT:
             return None
         return self._fechar_buffer()
 
