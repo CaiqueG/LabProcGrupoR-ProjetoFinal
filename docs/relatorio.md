@@ -58,20 +58,26 @@ Desenvolver um sistema embarcado de controle de presença em sala de aula, execu
 
 ## 3. Requisitos Funcionais
 
-**RF1** — Decodificar dígitos Morse (0–9): toque < 0,3s = ponto; toque ≥ 0,3s = traço; 5 símbolos por dígito (ITU-R M.1677). *Critério:* sequência correta retorna o dígito no LCD e na interface web.
+**RF1** — O sistema deve decodificar dígitos em código Morse numérico (0–9), distinguindo pontos e traços pela duração do toque e utilizando o padrão ITU-R M.1677.  
+*Critério:* a sequência correspondente a um dígito válido é decodificada corretamente e exibida ao usuário.
 
-**RF1b** — Pausa ≥ 1,0s fecha o dígito **somente se já houver 5 símbolos** (intervalo entre dígitos). Pausa com buffer incompleto preserva os símbolos. *Critério:* demorar entre toques do mesmo dígito não descarta a digitação; após o 5º símbolo + 1s, dígito é fechado.
+**RF1b** — O sistema deve considerar um dígito concluído apenas quando houver cinco símbolos válidos digitados, preservando o buffer caso a sequência ainda esteja incompleta.  
+*Critério:* pausas durante a digitação de um dígito incompleto não descartam os símbolos já inseridos.
 
-**RF2** — Com 4 dígitos confirmados, validar senha contra cadastro local; se válida, registrar presença (nome, data, hora) em CSV. *Critério:* LED verde, buzzer sucesso, presença no CSV e na interface web.
+**RF2** — O sistema deve validar uma senha composta por quatro dígitos contra o cadastro local e, quando válida, registrar a presença do aluno.  
+*Critério:* senhas cadastradas são reconhecidas e registradas corretamente.
 
-**RF2b** — Senha inválida: sinalizar erro e retornar ao estado de espera. *Critério:* LED vermelho, buzzer erro, nenhum registro no CSV.
+**RF2b** — O sistema deve informar quando uma senha digitada for inválida e retornar ao estado inicial de espera.  
+*Critério:* senhas não cadastradas não geram registro de presença.
 
-**RF3** — Botão Cancelar limpa o buffer a qualquer momento. *Critério:* LCD exibe "Digite a senha em Morse", buffer zerado.
+**RF3** — O sistema deve permitir que o usuário cancele a digitação da senha, limpando o buffer de entrada.  
+*Critério:* após o cancelamento, o sistema retorna ao estado inicial aguardando uma nova senha.
 
-**RF4** — Display LCD 1602 exibe feedback durante toda a interação (símbolos digitados, senha parcial, resultado). *Critério:* LCD atualiza a cada toque.
+**RF4** — O sistema deve fornecer feedback ao usuário durante a interação por meio do display LCD, LEDs e buzzer.  
+*Critério:* os dispositivos de saída refletem o estado atual do sistema e o resultado da validação da senha.
 
-**RF5** — Interface web exibe estado do sistema e histórico das últimas 10 presenças em tempo real. *Critério:* página em `http://<ip>:5000` atualiza a cada 1 segundo.
-
+**RF5** — O sistema deve disponibilizar uma interface web que exiba o estado atual do sistema e o histórico das últimas presenças registradas.  
+*Critério:* a interface apresenta corretamente as informações de estado e histórico armazenadas pelo sistema.
 
 ---
 
