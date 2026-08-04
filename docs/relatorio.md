@@ -105,7 +105,8 @@ O sistema é executado inteiramente no **Raspberry Pi 3 Model B** (SoC Broadcom 
 | ---------------- | ------------- | --------------- | ------------------------------------------- |
 | Botão Morse      | GPIO digital  | 26              | Botão S4 da placa Freenove (doc Ch. 3)      |
 | Botão Confirmar  | GPIO digital  | 16              | Botão externo na protoboard                 |
-| Botão Cancelar   | GPIO digital  | 21              | Botão externo na protoboard                 |
+| Botão Limpa      | GPIO digital  | 20              | Apaga só o último dígito da senha           |
+| Botão Cancelar   | GPIO digital  | 21              | Zera senha + buffer                         |
 | RGB LED R/G/B    | GPIO digital  | 5 / 6 / 13      | LED RGB Freenove (`active_high=False`, Ch. 5) |
 | Buzzer passivo   | GPIO digital  | 12              | Conector Buzzer da placa Freenove           |
 | Display LCD 1602 | I2C (SDA/SCL) | GPIO 2 / GPIO 3 | Conector I2C da placa Freenove              |
@@ -280,7 +281,7 @@ Essa mudança requer revisão da lógica de `verificar_timeout()` em `morse_deco
 | `database.py` | Valida senha em JSON e grava presença em CSV |
 | Biblioteca GPIO | Apenas `gpiozero` — sem `RPi.GPIO` |
 
-**Pinagem Freenove (BCM):** Morse S4=26; RGB=5/6/13 (`active_high=False`); Buzzer=12; Confirmar=16; Cancelar=21; LCD I2C SDA/SCL=2/3.
+**Pinagem Freenove (BCM):** Morse S4=26; RGB=5/6/13 (`active_high=False`); Buzzer=12; Confirmar=16; Limpa=20; Cancelar=21; LCD I2C SDA/SCL=2/3.
 
 **Demo:** `python3 src/demo_validacao.py`
 
