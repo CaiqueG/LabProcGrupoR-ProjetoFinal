@@ -104,8 +104,8 @@ O sistema é executado inteiramente no **Raspberry Pi 3 Model B** (SoC Broadcom 
 | Componente       | Interface     | Pino BCM        | Função                                      |
 | ---------------- | ------------- | --------------- | ------------------------------------------- |
 | Botão Morse      | GPIO digital  | 26              | Botão S4 da placa Freenove (doc Ch. 3)      |
-| Botão Confirmar  | GPIO digital  | 18              | Botão externo na protoboard                 |
-| Botão Cancelar   | GPIO digital  | 23              | Botão externo na protoboard                 |
+| Botão Confirmar  | GPIO digital  | 16              | Botão externo na protoboard                 |
+| Botão Cancelar   | GPIO digital  | 21              | Botão externo na protoboard                 |
 | RGB LED R/G/B    | GPIO digital  | 5 / 6 / 13      | LED RGB Freenove (`active_high=False`, Ch. 5) |
 | Buzzer passivo   | GPIO digital  | 12              | Conector Buzzer da placa Freenove           |
 | Display LCD 1602 | I2C (SDA/SCL) | GPIO 2 / GPIO 3 | Conector I2C da placa Freenove              |
@@ -265,7 +265,7 @@ Essa mudança requer revisão da lógica de `verificar_timeout()` em `morse_deco
 
 | Lição Semana 1 | Mudança na implementação (Semana 2) |
 | -------------- | ----------------------------------- |
-| Sem botão para limpar o buffer | Botão **Cancelar** (GPIO 23): única forma de descartar digitação em andamento (`decoder.limpar()`). Confirmar **não** apaga buffer incompleto. |
+| Sem botão para limpar o buffer | Botão **Cancelar** (GPIO 21): única forma de descartar digitação em andamento (`decoder.limpar()`). Confirmar **não** apaga buffer incompleto. |
 | Timeout intra-dígito descartava símbolos | `verificar_timeout()` ignora buffer com < 5 símbolos (espera indefinida). Só fecha após exatamente 5 símbolos + pausa ≥ 1s (intervalo **entre** dígitos). Demos não fecham mais no 5º toque imediato. |
 | `fechar_digito_se_completo` limpava incompleto | Agora retorna `None` e **preserva** o buffer se houver < 5 símbolos (só Cancelar limpa). |
 
@@ -275,13 +275,13 @@ Essa mudança requer revisão da lógica de `verificar_timeout()` em `morse_deco
 
 | Item | Descrição |
 | ---- | --------- |
-| Botão Confirmar | GPIO 18 — valida senha de 4 dígitos; se houver 5 símbolos pendentes, fecha o dígito sem esperar o gap |
+| Botão Confirmar | GPIO 16 — valida senha de 4 dígitos; se houver 5 símbolos pendentes, fecha o dígito sem esperar o gap |
 | LCD 1602 I2C | Feedback em duas linhas; fallback para console se I2C ausente (RNF4) |
 | Buzzer | GPIO 12 via `TonalBuzzer` (gpiozero), em thread própria (RNF3) |
 | `database.py` | Valida senha em JSON e grava presença em CSV |
 | Biblioteca GPIO | Apenas `gpiozero` — sem `RPi.GPIO` |
 
-**Pinagem Freenove (BCM):** Morse S4=26; RGB=5/6/13 (`active_high=False`); Buzzer=12; Confirmar=18; Cancelar=23; LCD I2C SDA/SCL=2/3.
+**Pinagem Freenove (BCM):** Morse S4=26; RGB=5/6/13 (`active_high=False`); Buzzer=12; Confirmar=16; Cancelar=21; LCD I2C SDA/SCL=2/3.
 
 **Demo:** `python3 src/demo_validacao.py`
 
