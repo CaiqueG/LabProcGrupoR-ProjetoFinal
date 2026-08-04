@@ -1,28 +1,4 @@
 #!/usr/bin/env python3
-"""
-hardware.py — Abstração dos periféricos GPIO (Semana 2).
-
-Biblioteca ÚNICA de GPIO: gpiozero (+ lgpio como backend).
-Não usar RPi.GPIO neste projeto — conflito de driver na Aula 10.
-
-Pinagem (BCM) — Freenove Projects Kit (FNK0054) + protoboard:
-
-    Componente          Pino    Origem Freenove / doc
-    ─────────────────────────────────────────────────
-    Botão Morse         26      Botão S4 (Ch. 3 Buttons & LEDs)
-    Botão Confirmar     16      Externo na protoboard
-    Botão Limpa         20      Externo na protoboard (apaga último dígito)
-    Botão Cancelar      21      Externo na protoboard (zera senha + buffer)
-    RGB LED Red         5       LED RGB da placa (Ch. 5 RGB LED)
-    RGB LED Green       6       LED RGB da placa (Ch. 5 RGB LED)
-    RGB LED Blue        13      LED RGB da placa (Ch. 5 RGB LED)
-    Buzzer              12      Conector Buzzer da placa Freenove
-
-Buzzer: usa gpiozero.Buzzer (liga/desliga). Evita TonalBuzzer, que no
-Freenove gera "tone is out of device's range" e pode deixar o pino
-zumbindo sem parar.
-"""
-
 import threading
 import time
 
@@ -42,11 +18,13 @@ DEBOUNCE_S = 0.05          # RNF2 — debounce de ~50ms
 DURACAO_PISCA_S = 0.1
 DURACAO_RESULTADO_S = 1.5
 
-# Três bipes curtos de sucesso (liga/desliga — sempre termina em off)
+# Sucesso: 3 bipes curtos. Erro: 2 bipes longos (padrão bem diferente).
 N_BIPES_SUCESSO = 3
 DURACAO_BIP_SUCESSO_S = 0.12
 PAUSA_ENTRE_BIPES_S = 0.10
-DURACAO_BIP_ERRO_S = 0.40
+N_BIPES_ERRO = 2
+DURACAO_BIP_ERRO_S = 0.35
+PAUSA_ENTRE_BIPES_ERRO_S = 0.15
 
 
 class HardwareMorse:
@@ -181,8 +159,8 @@ class HardwareMorse:
         self._bipes(N_BIPES_SUCESSO, DURACAO_BIP_SUCESSO_S, PAUSA_ENTRE_BIPES_S)
 
     def bip_erro(self):
-        """Um bip longo — senha inválida."""
-        self._bipes(1, DURACAO_BIP_ERRO_S, 0.0)
+        """Dois bipes longos — senha inválida (tom/padrão distinto do sucesso)."""
+        self._bipes(N_BIPES_ERRO, DURACAO_BIP_ERRO_S, PAUSA_ENTRE_BIPES_ERRO_S)
 
     def sinalizar_sucesso(self):
         self.acender_sucesso()

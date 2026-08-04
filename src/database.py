@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-database.py — Persistência local (RF2) — Semana 2.
-
-- data/alunos.json  : cadastro {"senha_4_digitos": "nome do aluno"}
-- data/presencas.csv: histórico (nome, data, hora)
-"""
-
 import csv
 import json
 import os
