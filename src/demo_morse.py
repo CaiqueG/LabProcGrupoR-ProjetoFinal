@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-"""
-demo_morse.py — Demonstração do decodificador Morse (base Semana 1, timeout S2).
-
-Alinhado à conclusão da Semana 1:
-  - Pausa com < 5 símbolos NÃO descarta o buffer.
-  - Dígito só fecha após 5 símbolos + pausa ≥ 1s (intervalo entre dígitos).
-
-Hardware (placa Freenove):
-    Botão Morse  -> GPIO 26  (botão S4)
-    RGB LED Red  -> GPIO 5
-    RGB LED Green-> GPIO 6
-    RGB LED Blue -> GPIO 13
-
-Para validação completa (Cancelar/Confirmar/LCD/DB), use demo_validacao.py.
-
-    python3 src/demo_morse.py
-"""
-
 import sys
 import os
 import time

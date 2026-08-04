@@ -1,27 +1,4 @@
 #!/usr/bin/env python3
-"""
-demo_validacao.py — Demonstração Semana 2: Morse + LCD + DB + buzzer.
-
-  - Botão Limpa (GPIO 20): apaga só o dígito mais recente da senha.
-  - Botão Cancelar (GPIO 21): zera senha + buffer por completo.
-  - Timeout NÃO descarta dígito incompleto; só fecha após 5 símbolos + pausa ≥ 1s.
-  - Confirmar valida senha completa (ou fecha dígito com 5 símbolos sem esperar o gap).
-
-Hardware (Freenove FNK0054 + protoboard):
-    Botão Morse (S4)  -> GPIO 26
-    Botão Confirmar   -> GPIO 16  (protoboard)
-    Botão Limpa       -> GPIO 20  (protoboard)
-    Botão Cancelar    -> GPIO 21  (protoboard)
-    RGB LED           -> GPIO 5/6/13
-    Buzzer            -> GPIO 12
-    LCD 1602 I2C      -> SDA=GPIO2, SCL=GPIO3  (opcional — fallback console)
-
-Senha rápida de teste (só pontos): 5555 = ..... ..... ..... .....
-
-Como usar:
-    python3 src/demo_validacao.py
-"""
-
 import os
 import sys
 import time

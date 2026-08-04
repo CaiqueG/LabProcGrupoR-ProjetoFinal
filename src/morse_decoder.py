@@ -1,26 +1,4 @@
 #!/usr/bin/env python3
-"""
-morse_decoder.py — Decodificação de código Morse numérico (0–9).
-
-Responsável apenas pela LÓGICA de tradução: recebe durações de toque
-(em segundos) e devolve dígitos. Não conhece GPIO, LCD, Flask ou banco
-de dados — isso é o que permite testá-lo isoladamente (tests/test_morse_decoder.py),
-seguindo a "Regra de Ouro" registrada na Aula 10: nunca integrar um componente
-que não passou no seu próprio teste unitário.
-
-Tabela Morse numérica (padrão internacional ITU-R M.1677 — 5 símbolos/dígito):
-    0 -----   5 .....
-    1 .----   6 -....
-    2 ..---   7 --...
-    3 ...--   8 ---..
-    4 ....-   9 ----.
-
-Semana 2 — timeout revisado:
-    A pausa intra-dígito NÃO descarta símbolos incompletos (< 5).
-    O timeout de DIGIT_GAP_TIMEOUT só fecha o dígito após exatamente
-    5 símbolos (intervalo entre dígitos completos).
-"""
-
 import time
 
 # ── Parâmetros de tempo (RF1 / RNF2) ────────────────────────────────

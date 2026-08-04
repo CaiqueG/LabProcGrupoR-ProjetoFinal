@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""
-tests/test_morse_decoder.py — Testes unitários do decodificador Morse.
-
-Não depende de GPIO, LCD ou Raspberry Pi.
-
-Executar:  python3 -m unittest tests/test_morse_decoder.py -v
-"""
-
 import os
 import sys
 import time

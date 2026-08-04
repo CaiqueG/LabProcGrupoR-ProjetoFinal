@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""
-lcd1602_driver.py — Driver de baixo nível para LCD 1602 via I2C (PCF8574).
-
-Baseado no LCD1602.py das Aulas 08/10 e no tutorial Freenove I2C LCD.
-Não usa GPIO digital — apenas smbus2 no barramento I2C-1 (SDA=GPIO2, SCL=GPIO3).
-
-Uso: prefira lcd_driver.py, que envolve esta classe com fallback para console.
-"""
-
 import time
 
 try:

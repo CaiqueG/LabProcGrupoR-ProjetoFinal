@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-lcd_driver.py — Wrapper do LCD 1602 com fallback para console (RNF4).
-
-Se o I2C não responder, as mensagens vão para o terminal e o sistema
-continua funcionando (Semana 2).
-"""
-
 import sys
 
 from lcd1602_driver import CharLCD1602
