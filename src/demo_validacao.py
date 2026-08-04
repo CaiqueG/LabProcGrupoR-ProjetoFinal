@@ -10,8 +10,8 @@ Incorpora as lições da Semana 1:
 
 Hardware (Freenove FNK0054 + protoboard):
     Botão Morse (S4)  -> GPIO 26
-    Botão Confirmar   -> GPIO 18  (protoboard)
-    Botão Cancelar    -> GPIO 23  (protoboard)
+    Botão Confirmar   -> GPIO 16  (protoboard)
+    Botão Cancelar    -> GPIO 21  (protoboard)
     RGB LED           -> GPIO 5/6/13
     Buzzer            -> GPIO 12
     LCD 1602 I2C      -> SDA=GPIO2, SCL=GPIO3  (opcional — fallback console)
@@ -159,7 +159,7 @@ def main():
     _mostrar_idle()
     print("=" * 56)
     print("  Demo Validação — Semana 2")
-    print("  Morse S4=GPIO26 | Confirmar=GPIO18 | Cancelar=GPIO23")
+    print("  Morse S4=GPIO26 | Confirmar=GPIO16 | Cancelar=GPIO21")
     print("  RGB 5/6/13 | Buzzer=GPIO12 | LCD I2C (opcional)")
     print("  Timeout: so fecha apos 5 simbolos + pausa 1s")
     print("  Cancelar = unica forma de limpar buffer parcial")

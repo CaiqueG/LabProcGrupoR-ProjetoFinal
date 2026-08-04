@@ -10,8 +10,8 @@ Pinagem (BCM) — Freenove Projects Kit (FNK0054) + protoboard:
     Componente          Pino    Origem Freenove / doc
     ─────────────────────────────────────────────────
     Botão Morse         26      Botão S4 (Ch. 3 Buttons & LEDs)
-    Botão Confirmar     18      Externo na protoboard
-    Botão Cancelar      23      Externo na protoboard
+    Botão Confirmar     16      Externo na protoboard
+    Botão Cancelar      21      Externo na protoboard
     RGB LED Red         5       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Green       6       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Blue        13      LED RGB da placa (Ch. 5 RGB LED)
@@ -30,8 +30,8 @@ from gpiozero.tones import Tone
 
 # ── Pinagem BCM (Freenove) ──────────────────────────────────────────
 PIN_BOTAO_MORSE = 26
-PIN_BOTAO_CONFIRMAR = 18
-PIN_BOTAO_CANCELAR = 23
+PIN_BOTAO_CONFIRMAR = 16
+PIN_BOTAO_CANCELAR = 21
 PIN_RGB_RED = 5
 PIN_RGB_GREEN = 6
 PIN_RGB_BLUE = 13
