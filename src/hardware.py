@@ -15,18 +15,17 @@ Pinagem (BCM) — Freenove Projects Kit (FNK0054) + protoboard:
     RGB LED Red         5       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Green       6       LED RGB da placa (Ch. 5 RGB LED)
     RGB LED Blue        13      LED RGB da placa (Ch. 5 RGB LED)
-    Buzzer passivo      12      Conector Buzzer da placa Freenove
+    Buzzer              12      Conector Buzzer da placa Freenove
 
-Referências:
-    https://docs.freenove.com/projects/fnk0054/en/latest/fnk0054/codes/c%26py/3_Buttons_%26_LEDs.html
-    https://docs.freenove.com/projects/fnk0054/en/latest/fnk0054/codes/c%26py/5_RGB_LED.html
+Buzzer: usa gpiozero.Buzzer (liga/desliga). Evita TonalBuzzer, que no
+Freenove gera "tone is out of device's range" e pode deixar o pino
+zumbindo sem parar.
 """
 
 import threading
 import time
 
-from gpiozero import Button, RGBLED, TonalBuzzer
-from gpiozero.tones import Tone
+from gpiozero import Button, RGBLED, Buzzer
 
 # ── Pinagem BCM (Freenove) ──────────────────────────────────────────
 PIN_BOTAO_MORSE = 26
@@ -42,12 +41,11 @@ DEBOUNCE_S = 0.05          # RNF2 — debounce de ~50ms
 DURACAO_PISCA_S = 0.1
 DURACAO_RESULTADO_S = 1.5
 
-# Três notas curtas (sucesso) — não deixa o buzzer ligado
-FREQ_SUCESSO_HZ = (659, 784, 988)  # Mi–Sol–Si
-FREQ_ERRO_HZ = 220
+# Três bipes curtos de sucesso (liga/desliga — sempre termina em off)
+N_BIPES_SUCESSO = 3
 DURACAO_BIP_SUCESSO_S = 0.12
-PAUSA_ENTRE_BIPES_S = 0.08
-DURACAO_BIP_ERRO_S = 0.35
+PAUSA_ENTRE_BIPES_S = 0.10
+DURACAO_BIP_ERRO_S = 0.40
 
 
 class HardwareMorse:
@@ -77,7 +75,8 @@ class HardwareMorse:
         )
 
         try:
-            self.buzzer = TonalBuzzer(PIN_BUZZER)
+            self.buzzer = Buzzer(PIN_BUZZER)
+            self.buzzer.off()
         except Exception as exc:
             print(f"[HARDWARE] Buzzer indisponível ({exc}); seguindo sem áudio.")
             self.buzzer = None
@@ -136,46 +135,39 @@ class HardwareMorse:
     def apagar_leds(self):
         self.rgb.off()
 
-    # ── Buzzer (thread própria — RNF3 / RNF4) ──────────────────────
-    def _parar_buzzer(self):
+    # ── Buzzer (liga/desliga — RNF3 / RNF4) ────────────────────────
+    def parar_buzzer(self):
+        """Garante que o buzzer fica desligado."""
         if self.buzzer is None:
             return
         try:
-            self.buzzer.stop()
+            self.buzzer.off()
         except Exception:
             pass
 
-    def _tocar_notas(self, frequencias, duracao_s, pausa_s=0.0):
-        """Toca notas em sequência e SEMPRE para o buzzer no final."""
+    def _bipes(self, n, ligado_s, pausa_s):
         if self.buzzer is None:
             return
         with self._buzzer_lock:
             try:
-                for freq in frequencias:
-                    self.buzzer.play(Tone(frequency=freq))
-                    time.sleep(duracao_s)
-                    self.buzzer.stop()
-                    if pausa_s > 0:
+                for i in range(n):
+                    self.buzzer.on()
+                    time.sleep(ligado_s)
+                    self.buzzer.off()
+                    if i < n - 1 and pausa_s > 0:
                         time.sleep(pausa_s)
             except Exception as exc:
                 print(f"[HARDWARE] Falha ao tocar buzzer: {exc}")
             finally:
-                self._parar_buzzer()
+                self.parar_buzzer()
 
     def bip_sucesso(self):
-        """Três bipes curtos ascendentes — senha correta (não fica infinito)."""
-        threading.Thread(
-            target=self._tocar_notas,
-            args=(FREQ_SUCESSO_HZ, DURACAO_BIP_SUCESSO_S, PAUSA_ENTRE_BIPES_S),
-            daemon=True,
-        ).start()
+        """Três bipes curtos — senha correta (síncrono, sempre desliga)."""
+        self._bipes(N_BIPES_SUCESSO, DURACAO_BIP_SUCESSO_S, PAUSA_ENTRE_BIPES_S)
 
     def bip_erro(self):
-        threading.Thread(
-            target=self._tocar_notas,
-            args=((FREQ_ERRO_HZ,), DURACAO_BIP_ERRO_S, 0.0),
-            daemon=True,
-        ).start()
+        """Um bip longo — senha inválida."""
+        self._bipes(1, DURACAO_BIP_ERRO_S, 0.0)
 
     def sinalizar_sucesso(self):
         self.acender_sucesso()
@@ -188,7 +180,7 @@ class HardwareMorse:
     # ── Encerramento limpo ─────────────────────────────────────────
     def cleanup(self):
         self.apagar_leds()
-        self._parar_buzzer()
+        self.parar_buzzer()
         if self.buzzer is not None:
             try:
                 self.buzzer.close()
