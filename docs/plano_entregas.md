@@ -70,33 +70,49 @@ ProjetoFinal/
 - [x] Arquitetura proposta (física e software)
 - [x] Ferramentas: Python 3, Flask, gpiozero, smbus2, RPi 3
 - [x] Metodologia de desenvolvimento
-- [ ] Testes planejados *(tabela com casos, sem resultados ainda)*
-- [ ] Conclusões *(adiado para semana 4)*
+- [X] Testes planejados *(tabela com casos, sem resultados ainda)*
+- [X] Conclusões *(adiado para semana 4)*
 
 ### Checklist de entrega
 
-- [ ] Repositório GitHub público criado
-- [ ] Código em `src/`, testes em `tests/`, docs em `docs/`
-- [ ] `README.md` com instruções de instalação e execução
-- [ ] `LICENSE` (GNU GPL v3)
-- [ ] `.gitignore` (Python + Flask)
-- [ ] `docs/relatorio.md` com seções de motivação a metodologia
-- [ ] Pelo menos 1 diagrama D2 (arquitetura física)
-- [ ] Release `v0.1.0` criada no GitHub
-- [ ] PDF exportado do relatório e enviado no Moodle
+- [X] Repositório GitHub público criado
+- [X] Código em `src/`, testes em `tests/`, docs em `docs/`
+- [X] `README.md` com instruções de instalação e execução
+- [X] `LICENSE` (GNU GPL v3)
+- [X] `.gitignore` (Python + Flask)
+- [X] `docs/relatorio.md` com seções de motivação a metodologia
+- [X] Pelo menos 1 diagrama D2 (arquitetura física)
+- [X] Release `v0.1.0` criada no GitHub
+- [X] PDF exportado do relatório e enviado no Moodle
 
 ---
 
 ## Semana 2 — Avaliação por Pares
 
 **Release:** `v0.2.0`  
-**Foco:** Revisão do projeto de outro grupo via GitHub Issues + atualização com resultados dos primeiros testes.
+**Foco:** Evolução do sistema com integração dos periféricos, correções de usabilidade identificadas na Semana 1 e consolidação da persistência de dados.
 
 ### Atividades
 
-#### A — Revisão do projeto de outro grupo (GitHub Issues)
+#### A — Evolução da implementação
 
-Abrir Issues no repositório do grupo avaliado abordando:
+Implementar as melhorias identificadas durante os testes da Semana 1 e integrar os principais periféricos do sistema.
+
+Principais atividades:
+
+- Implementação do botão **Cancelar** para reiniciar completamente a digitação da senha;
+- Implementação do botão **Limpa**, permitindo apagar apenas o último dígito confirmado;
+- Revisão da lógica de timeout do decodificador Morse, preservando dígitos incompletos;
+- Integração do display LCD 1602 para exibição do estado do sistema;
+- Integração do buzzer com sinais distintos para sucesso e erro;
+- Implementação do módulo `database.py` para validação de senhas em JSON e registro de presença em CSV;
+- Padronização do acesso aos GPIO utilizando exclusivamente a biblioteca `gpiozero`.
+
+#### B — Avaliação por pares
+
+Realizar a revisão do projeto de outro grupo utilizando GitHub Issues.
+
+Aspectos avaliados:
 
 | Issue sugerida | Aspecto avaliado |
 |---|---|
@@ -106,41 +122,45 @@ Abrir Issues no repositório do grupo avaliado abordando:
 | Sugestão de ferramenta ou biblioteca | Ferramentas |
 | Melhoria na organização do repositório | Código |
 
-> **Atenção:** a qualidade importa mais que a quantidade. Abrir Issues superficiais não resulta em nota melhor.
+#### C — Testes
 
-#### B — Atualização do próprio projeto
-
-Executar os testes unitários e registrar os resultados:
+Executar novamente os testes unitários, incluindo os novos casos referentes ao timeout e ao módulo de persistência.
 
 ```bash
-python3 -m unittest tests/test_morse_decoder.py -v
+python3 -m unittest discover tests -v
 ```
 
 Evidências esperadas:
-- Print/log da execução dos 6 testes passando
-- Identificar se algum teste falhou e documentar a causa
 
+- Execução dos testes unitários;
+- Registro dos resultados no relatório;
+- Correção das Issues recebidas durante a avaliação por pares.
 Commits desta semana:
 
 | Commit | Conteúdo |
 |---|---|
-| `test: execução dos testes unitários — resultados semana 2` | Atualiza `docs/relatorio.md` com evidências |
-| `docs: rastreabilidade requisitos ↔ testes` | Tabela RF/RNF → casos de teste |
-| `fix: <correções apontadas pelas Issues recebidas>` | Ajustes no código/docs com base na revisão |
+| `feat: integração LCD e buzzer` | Drivers do LCD, feedback visual e sonoro |
+| `feat: validação de senha e persistência` | `database.py`, `alunos.json` e registro em CSV |
+| `feat: botões Confirmar, Limpa e Cancelar` | Melhorias de usabilidade da interface física |
+| `fix: revisão da lógica de timeout do Morse` | Preservação de dígitos incompletos |
+| `test: ampliação da suíte de testes` | Novos testes unitários para timeout e database |
+| `docs: atualização do relatório da Semana 2` | Resultados, rastreabilidade e correções das Issues |
 
 ### Seções do `docs/relatorio.md` a completar
 
-- [ ] Testes planejados *(expandir com casos de teste para cada RF/RNF)*
-- [ ] Rastreabilidade: tabela mapeando RF → caso de teste → resultado
-- [ ] Resultados dos testes unitários do `morse_decoder`
+- [X] Entrega da Semana 2
+- [X] Resultados Obtidos — Semana 2
+- [X] Lições Aprendidas — Semana 2
+- [X] Atualização da tabela de rastreabilidade
+- [X] Resultados dos testes unitários
 
 ### Checklist de entrega
 
-- [ ] Pelo menos 3 Issues abertas no repositório do grupo avaliado
-- [ ] `docs/relatorio.md` atualizado com resultados de testes
-- [ ] Tabela de rastreabilidade requisitos ↔ testes
-- [ ] Release `v0.2.0` criada no GitHub
-- [ ] PDF atualizado enviado no Moodle
+- [X] Pelo menos 3 Issues abertas no repositório do grupo avaliado
+- [X] `docs/relatorio.md` atualizado com resultados de testes
+- [X] Tabela de rastreabilidade requisitos ↔ testes
+- [X] Release `v0.2.0` criada no GitHub
+- [X] PDF atualizado enviado no Moodle
 
 ---
 
@@ -251,20 +271,22 @@ Commits desta semana:
 
 | ID | Descrição |
 |---|---|
-| RF1 | O sistema deve decodificar dígitos (0–9) em código Morse numérico ITU (5 símbolos/dígito), fechando automaticamente o dígito após pausa ≥ 1s ou por botão Confirmar |
-| RF2 | O sistema deve validar uma senha de 4 dígitos contra um cadastro local e registrar a presença (nome, data, hora) em arquivo CSV se a senha for válida |
-| RF3 | O sistema deve permitir cancelamento a qualquer momento, zerando o buffer de entrada |
-| RF4 | O sistema deve fornecer feedback multimodal: LED verde/vermelho, bipe no buzzer e mensagem no LCD |
-| RF5 | O sistema deve expor uma interface web acessível na rede local com status em tempo real e histórico das últimas 10 presenças |
+| RF1 | O sistema deve decodificar dígitos em código Morse numérico (0–9), distinguindo pontos e traços pela duração do toque e utilizando o padrão ITU-R M.1677. |
+| RF1b | O sistema deve considerar um dígito concluído apenas quando houver cinco símbolos válidos digitados, preservando o buffer caso a sequência ainda esteja incompleta. |
+| RF2 | O sistema deve validar uma senha composta por quatro dígitos contra um cadastro local e, quando válida, registrar a presença do aluno. |
+| RF2b | O sistema deve informar quando uma senha digitada for inválida e retornar ao estado inicial de espera. |
+| RF3 | O sistema deve permitir que o usuário cancele a digitação da senha, limpando o buffer de entrada. |
+| RF4 | O sistema deve fornecer feedback ao usuário por meio do display LCD, LEDs e buzzer durante a operação do sistema. |
+| RF5 | O sistema deve disponibilizar uma interface web que exiba o estado atual do sistema e o histórico das últimas presenças registradas. |
 
 ### Não Funcionais
 
 | ID | Descrição |
 |---|---|
-| RNF1 | Tempo de resposta da interface web < 1s (polling a cada 1s via AJAX) |
-| RNF2 | Debounce de 50ms nos botões; sequência Morse inválida descartada sem travar o sistema |
-| RNF3 | Sistema não-bloqueante: botões via callbacks (gpiozero), buzzer em thread separada, Flask em thread separada da FSM |
-| RNF4 | Resiliência de hardware: ausência de LCD ou buzzer não impede o funcionamento do sistema |
+| RNF1 | Tempo de resposta da interface web inferior a 1 s. |
+| RNF2 | Debounce de 50 ms nos botões e preservação de dígitos Morse incompletos até sua conclusão ou cancelamento. |
+| RNF3 | Sistema não bloqueante, utilizando callbacks da biblioteca `gpiozero` e execução independente do buzzer e do servidor Flask. |
+| RNF4 | O sistema deve continuar operando mesmo na ausência do LCD ou do buzzer, utilizando mecanismos alternativos de feedback quando necessário. |
 
 ---
 
@@ -274,17 +296,22 @@ Commits desta semana:
 |---|---|---|---|
 | RF1 | CT-RF1a: dígito "1" (.----) → senha "1___" | Hardware | Semana 3 |
 | RF1 | CT-RF1b: sequência inválida → "Sequência inválida" | Hardware | Semana 3 |
-| RF1 | CT-RF1c: 10 dígitos 0–9 decodificados corretamente | Unitário | Semana 1 ✅ |
-| RF1 | CT-RF1d: senha de 4 dígitos completa | Unitário | Semana 1 ✅ |
-| RF1 | CT-RF1e: timeout não fecha antes do prazo | Unitário | Semana 1 ✅ |
+| RF1 | CT-RF1c: 10 dígitos (0–9) decodificados corretamente | Unitário | Semana 1 ✅ |
+| RF1 | CT-RF1d: senha de 4 dígitos formada corretamente | Unitário | Semana 1 ✅ |
+| RF1 | CT-RF1e: timeout preserva dígito incompleto | Unitário | Semana 2 ✅ |
 | RF2 | CT-RF2a: senha válida → presença registrada no CSV | Hardware | Semana 3 |
-| RF2 | CT-RF2b: senha inválida → LED vermelho + bipe erro | Hardware | Semana 3 |
-| RF3 | CT-RF3: cancelar limpa buffer e senha | Unitário | Semana 1 ✅ |
-| RF3 | CT-RF3b: botão cancelar durante digitação | Hardware | Semana 3 |
-| RF4 | CT-RF4: LED verde + melodia no sucesso | Hardware | Semana 3 |
-| RF5 | CT-RF5: /status retorna JSON com campos corretos | Hardware | Semana 3 |
-| RNF1 | CT-RNF1: latência /status < 1s | Hardware | Semana 3 |
-| RNF2 | CT-RNF2: sequência incompleta → ERRO sem travar | Unitário | Semana 1 ✅ |
-| RNF2 | CT-RNF2b: toques extras após senha completa ignorados | Unitário | Semana 1 ✅ |
-| RNF3 | CT-RNF3: digitação simultânea ao Flask | Hardware | Semana 3 |
-| RNF4 | CT-RNF4: sistema funciona sem LCD conectado | Hardware | Semana 3 |
+| RF2 | CT-RF2b: senha inválida → LED vermelho + buzzer de erro | Hardware | Semana 3 |
+| RF2 | CT-RF2c: validar senha cadastrada | Unitário | Semana 2 ✅ |
+| RF2 | CT-RF2d: rejeitar senha inexistente | Unitário | Semana 2 ✅ |
+| RF2 | CT-RF2e: registrar presença no histórico CSV | Unitário | Semana 2 ✅ |
+| RF3 | CT-RF3a: botão Cancelar limpa toda a entrada | Unitário | Semana 1 ✅ |
+| RF3 | CT-RF3b: botão Cancelar durante a digitação | Hardware | Semana 3 |
+| RF4 | CT-RF4a: LCD exibe mensagens de estado | Hardware | Semana 2 ✅ |
+| RF4 | CT-RF4b: buzzer sinaliza sucesso e erro | Hardware | Semana 2 ✅ |
+| RF4 | CT-RF4c: LED verde/vermelho indica resultado da validação | Hardware | Semana 3 |
+| RF5 | CT-RF5: interface web retorna estado e histórico corretamente | Hardware | Semana 3 |
+| RNF1 | CT-RNF1: latência da interface web inferior a 1 s | Hardware | Semana 3 |
+| RNF2 | CT-RNF2: timeout não descarta sequência incompleta | Unitário | Semana 2 ✅ |
+| RNF2 | CT-RNF2b: debounce impede múltiplos eventos por acionamento | Hardware | Semana 3 |
+| RNF3 | CT-RNF3: buzzer e Flask executam sem bloquear a FSM | Hardware | Semana 3 |
+| RNF4 | CT-RNF4: sistema continua funcionando sem LCD conectado | Hardware | Semana 3 |
