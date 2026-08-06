@@ -265,37 +265,40 @@ Essa mudança requer revisão da lógica de `verificar_timeout()` em `morse_deco
 
 ### 8.4 Entrega da Semana 2 — Feedback visual e persistência
 
-**Objetivo:** aplicar as correções de usabilidade descobertas na Semana 1 e integrar LCD, buzzer, botões Confirmar/Cancelar e validação de senha com registro em CSV.
+**Objetivo:** aplicar as correções de usabilidade descobertas na Semana 1 e integrar LCD, buzzer, botões Confirmar, Limpa e Cancelar, além da validação de senha com registro em CSV.
 
 **A Semana 2 parte das conclusões da Semana 1** — não apenas de novos requisitos. As duas limitações identificadas no teste físico mudaram a implementação:
 
 | Lição Semana 1 | Mudança na implementação (Semana 2) |
 | -------------- | ----------------------------------- |
-| Sem botão para limpar o buffer | Botão **Cancelar** (GPIO 21): única forma de descartar digitação em andamento (`decoder.limpar()`). Confirmar **não** apaga buffer incompleto. |
-| Timeout intra-dígito descartava símbolos | `verificar_timeout()` ignora buffer com < 5 símbolos (espera indefinida). Só fecha após exatamente 5 símbolos + pausa ≥ 1s (intervalo **entre** dígitos). Demos não fecham mais no 5º toque imediato. |
-| `fechar_digito_se_completo` limpava incompleto | Agora retorna `None` e **preserva** o buffer se houver < 5 símbolos (só Cancelar limpa). |
+| Sem botão para limpar o buffer | Botão **Cancelar** (GPIO 21): única forma de descartar toda a digitação em andamento (`decoder.limpar()`). O botão **Confirmar** não apaga buffer incompleto. |
+| Timeout intra-dígito descartava símbolos | `verificar_timeout()` ignora buffer com < 5 símbolos (espera indefinida). O dígito só é fechado após exatamente 5 símbolos seguidos de uma pausa ≥ 1s (intervalo **entre** dígitos). |
+| `fechar_digito_se_completo` limpava incompleto | Agora retorna `None` e **preserva** o buffer caso existam menos de 5 símbolos (apenas o botão **Cancelar** limpa completamente a entrada). |
 
-**Artefatos entregues:** `src/lcd_driver.py`, `src/lcd1602_driver.py`, `src/database.py`, `src/data/alunos.json`, `src/demo_validacao.py`; atualizações em `src/hardware.py` e `src/morse_decoder.py`.
+**Artefatos entregues:** `src/lcd_driver.py`, `src/lcd1602_driver.py`, `src/database.py`, `src/data/alunos.json`, `src/demo_validacao.py`; atualizações em `src/hardware.py`, `src/morse_decoder.py` e `src/fsm.py`.
 
 **Demais integrações desta semana:**
 
 | Item | Descrição |
 | ---- | --------- |
-| Botão Confirmar | GPIO 16 — valida senha de 4 dígitos; se houver 5 símbolos pendentes, fecha o dígito sem esperar o gap |
-| LCD 1602 I2C | Feedback em duas linhas; fallback para console se I2C ausente (RNF4) |
-| Buzzer | GPIO 12 via `TonalBuzzer` (gpiozero), em thread própria (RNF3) |
-| `database.py` | Valida senha em JSON e grava presença em CSV |
-| Biblioteca GPIO | Apenas `gpiozero` — sem `RPi.GPIO` |
+| Botão Confirmar | GPIO 16 — valida a senha de 4 dígitos; se houver um dígito completo (5 símbolos) pendente, força seu fechamento sem aguardar a pausa entre dígitos |
+| Botão Limpa | GPIO 20 — remove o último dígito confirmado da senha, permitindo corrigir erros de digitação sem reiniciar todo o processo |
+| LCD 1602 I2C | Feedback em duas linhas; fallback para console caso o barramento I2C não esteja disponível (RNF4) |
+| Buzzer | GPIO 12 via `TonalBuzzer` (`gpiozero`), com sinais sonoros distintos para sucesso e erro, executados em thread própria (RNF3) |
+| `database.py` | Validação da senha utilizando cadastro em JSON e registro de presença em arquivo CSV |
+| Biblioteca GPIO | Padronização de toda a aplicação utilizando apenas `gpiozero`, eliminando dependência de `RPi.GPIO` |
 
-**Pinagem Freenove (BCM):** Morse S4=26; RGB=5/6/13 (`active_high=False`); Buzzer=12; Confirmar=16; Limpa=20; Cancelar=21; LCD I2C SDA/SCL=2/3.
+**Pinagem Freenove (BCM):** Morse S4 = 26; RGB = 5/6/13 (`active_high=False`); Buzzer = 12; Confirmar = 16; Limpa = 20; Cancelar = 21; LCD I2C SDA/SCL = 2/3.
 
 **Demo:** `python3 src/demo_validacao.py`
 
-**Requisitos cobertos nesta semana:** RF2, RF2b, RF3, RF4 (parcial — LCD+LED+buzzer), RNF2 (timeout revisado), RNF4 (LCD/buzzer opcionais).
+**Melhoria adicional de usabilidade:** além das correções previstas a partir da Semana 1, foi implementado um botão **Limpa**, permitindo apagar apenas o último dígito confirmado da senha. Essa funcionalidade reduz a necessidade de reiniciar toda a digitação quando o usuário comete um erro próximo ao final da entrada.
+
+**Requisitos cobertos nesta semana:** RF2, RF2b, RF3, RF4 (feedback por LCD, LEDs e buzzer), RNF2 (revisão da lógica de timeout), RNF3 (execução não bloqueante do buzzer) e RNF4 (funcionamento mesmo na ausência de LCD ou buzzer).
 
 ### 8.5 Resultados Obtidos — Semana 2
 
-Testes unitários (máquina de desenvolvimento), incluindo os novos casos de timeout e database — **12 testes OK**:
+Os testes unitários foram ampliados para contemplar as novas funcionalidades introduzidas nesta etapa, especialmente a revisão da lógica de timeout e a integração com o módulo de persistência de dados. Todos os testes executados na máquina de desenvolvimento foram aprovados, totalizando **12 casos de teste**:
 
 ```
 test_timeout_nao_descarta_digito_incompleto ... ok
@@ -308,10 +311,23 @@ test_registrar_e_ler_historico ... ok
 Ran 12 tests in 0.012s — OK
 ```
 
-Testes de hardware previstos na placa: TH-03 (senha válida), TH-04 (cancelar), TH-05 (debounce).
+Na placa Raspberry Pi, os novos periféricos foram integrados e validados individualmente. O display LCD passou a exibir as mensagens de orientação ao usuário e o resultado da validação da senha, enquanto o buzzer foi configurado com sinais sonoros distintos para sucesso e erro. Os botões **Confirmar**, **Limpa** e **Cancelar** também tiveram seu funcionamento verificado durante a integração com a FSM.
+
+Os testes completos de integração (registro de presença em CSV, validação completa da senha e medições dos requisitos não funcionais) permanecem planejados para a Semana 3, quando todo o sistema estará integrado e validado em conjunto.
 
 ---
 
+### 8.6 Lições Aprendidas — Semana 2
+
+A integração dos novos periféricos evidenciou que a separação entre a lógica da aplicação e a camada de hardware facilita significativamente o desenvolvimento incremental. A utilização de módulos independentes permitiu validar LCD, buzzer e botões antes da integração completa à máquina de estados.
+
+A principal melhoria de usabilidade implementada nesta etapa foi a revisão da lógica de entrada do código Morse. O timeout deixou de invalidar automaticamente um dígito incompleto, preservando os símbolos já digitados até que o usuário complete os cinco elementos necessários. Essa alteração tornou a interação significativamente mais tolerante a pausas naturais durante a digitação.
+
+Outra melhoria importante foi a introdução de dois mecanismos distintos para correção da entrada. O botão **Cancelar** continua responsável por reiniciar completamente a digitação, enquanto o novo botão **Limpa** permite remover apenas o último dígito confirmado, reduzindo a necessidade de reiniciar todo o processo quando ocorre um erro próximo ao final da senha.
+
+Também foi observada a importância de padronizar toda a aplicação utilizando apenas a biblioteca `gpiozero`, evitando conflitos entre bibliotecas de acesso aos GPIO e simplificando a integração entre os diferentes periféricos.
+
+Para a Semana 3, o foco passa a ser a integração completa da FSM com todos os módulos desenvolvidos, a validação do fluxo completo de registro de presença na placa e a implementação da interface web para monitoramento em tempo real.
 
 
 ## 9. Testes Planejados
